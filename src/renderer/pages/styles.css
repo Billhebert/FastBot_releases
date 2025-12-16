@@ -1,0 +1,488 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  background: #f5f5f5;
+  color: #212121;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #212121 0%, #28648c 100%);
+}
+
+.auth-box {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  width: 400px;
+  position: relative;
+  z-index: 10;
+}
+
+.auth-box h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #28648c;
+}
+
+.form-section h2 {
+  margin-bottom: 20px;
+  color: #212121;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #28648c;
+  border-color: #28648c;
+  z-index: 2;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #28648c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: #1e4d6b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 100, 140, 0.3);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.menu {
+  background: #141414;
+  padding: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.menu button {
+  width: auto;
+  padding: 10px 20px;
+  background: #212121;
+}
+
+.menu button:hover {
+  background: #28648c;
+}
+
+.user-info {
+  color: white;
+  margin-right: auto;
+  font-weight: 500;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+h1 {
+  margin-bottom: 30px;
+  color: #212121;
+}
+
+.actions {
+  margin-bottom: 30px;
+}
+
+.add-form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.macro-item,
+.pix-item,
+.proxy-item,
+.password-item {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.macro-item:hover,
+.pix-item:hover,
+.proxy-item:hover,
+.password-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.macro-item.disabled {
+  opacity: 0.5;
+}
+
+.badge {
+  background: #e0e0e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 10px;
+  color: #212121;
+}
+
+.actions button {
+  width: auto;
+  padding: 8px 15px;
+  margin-left: 10px;
+}
+
+.execution-form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.btn-execute {
+  background: #28648c;
+  margin-top: 15px;
+}
+
+.btn-execute:hover {
+  background: #1e4d6b;
+}
+
+.execution-status,
+.stats,
+.macros-list,
+.pix-list,
+.proxies-list,
+.passwords-list {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#recording-panel {
+  background: #fff9e6;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  border-left: 4px solid #28648c;
+}
+
+/* Garante que inputs sempre fiquem clicáveis */
+input, textarea, select {
+  pointer-events: auto !important;
+}
+
+/* Sistema de Notificações */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10000;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  min-width: 300px;
+  max-width: 500px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-info {
+  border-left: 4px solid #28648c;
+}
+
+.notification-success {
+  border-left: 4px solid #4CAF50;
+}
+
+.notification-warning {
+  border-left: 4px solid #FF9800;
+}
+
+.notification-error {
+  border-left: 4px solid #F44336;
+}
+
+.notification span {
+  flex: 1;
+}
+
+.notification button {
+  width: auto;
+  background: none;
+  color: #666;
+  font-size: 20px;
+  padding: 0;
+  min-width: 30px;
+  cursor: pointer;
+}
+
+.notification button:hover {
+  color: #212121;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(20, 20, 20, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  animation: scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f8f8;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #212121;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  min-width: auto;
+}
+
+.modal-close:hover {
+  color: #212121;
+}
+
+.modal-body {
+  padding: 20px;
+  line-height: 1.6;
+  color: #212121;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  background: #f8f8f8;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: auto;
+  transition: all 0.3s ease;
+}
+
+.modal-btn-primary {
+  background: #28648c;
+  color: white;
+}
+
+.modal-btn-primary:hover {
+  background: #1e4d6b;
+}
+
+.modal-btn-secondary {
+  background: #e0e0e0;
+  color: #212121;
+}
+
+.modal-btn-secondary:hover {
+  background: #d0d0d0;
+}
+
+.modal-btn-default {
+  background: #28648c;
+  color: white;
+}
+
+.modal-btn-default:hover {
+  background: #1e4d6b;
+}
+
+/* Estilos adicionais para melhor integração visual */
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #28648c;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Melhorias nos cards */
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Tema escuro para áreas específicas */
+.dark-section {
+  background: #141414;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.dark-section h2,
+.dark-section h3 {
+  color: white;
+}
+
+.dark-section .badge {
+  background: #28648c;
+  color: white;
+}

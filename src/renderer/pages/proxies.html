@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Proxies</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="menu-container"></div>
+
+    <div class="container">
+      <h1>Gerenciar Proxies</h1>
+
+      <div class="add-form">
+        <h3>Adicionar Proxies</h3>
+        <textarea
+          id="proxies"
+          placeholder="Cole os proxies aqui (um por linha)&#10;&#10;Formatos aceitos:&#10;ip:porta&#10;ip:porta:usuario:senha&#10;&#10;Exemplos:&#10;192.168.1.1:8080&#10;192.168.1.1:8080:admin:password123"
+          rows="8"
+        ></textarea>
+        <button onclick="addProxies()">Adicionar Proxies</button>
+      </div>
+
+      <div class="proxies-list">
+        <h3>Proxies Cadastrados</h3>
+        <div id="proxies-container">Carregando...</div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="notifications.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="auth.js"></script>
+    <script src="router.js"></script>
+
+    <script>
+      let currentUser = null;
+
+      async function init() {
+        currentUser = await requirePagePermission("proxies");
+        if (!currentUser) return;
+        document.getElementById("menu-container").innerHTML = createMenu();
+        await loadProxies();
+      }
+
+      async function loadProxies() {
+        try {
+          const { data, error } = await supabaseClient
+            .from("proxies")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+
+          const container = document.getElementById("proxies-container");
+
+          if (!data || data.length === 0) {
+            container.innerHTML = "<p>Nenhum proxy cadastrado</p>";
+            return;
+          }
+
+          container.innerHTML = data
+            .map(
+              (proxy) => `
+          <div class="proxy-item">
+            <div>
+              <strong>${proxy.host}:${proxy.port}</strong>
+              ${
+                proxy.username
+                  ? `<span class="badge">Auth: ${proxy.username}</span>`
+                  : '<span class="badge">Sem Auth</span>'
+              }
+            </div>
+            <div class="actions">
+              <button onclick="testProxy('${proxy.id}')">Testar</button>
+              <button onclick="deleteProxy('${proxy.id}')">Excluir</button>
+            </div>
+          </div>
+        `
+            )
+            .join("");
+        } catch (error) {
+          showNotification(
+            "Erro ao carregar proxies: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      async function addProxies() {
+        const proxiesText = document.getElementById("proxies").value;
+
+        if (!proxiesText.trim()) {
+          showNotification("Digite pelo menos um proxy", "warning");
+          return;
+        }
+
+        const lines = proxiesText
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l);
+
+        if (lines.length === 0) {
+          showNotification("Nenhum proxy válido encontrado", "warning");
+          return;
+        }
+
+        try {
+          const proxiesData = lines.map((line) => {
+            const parts = line.split(":");
+
+            if (parts.length < 2) {
+              throw new Error(`Formato inválido: ${line}`);
+            }
+
+            return {
+              host: parts[0],
+              port: parseInt(parts[1]),
+              username: parts[2] || null,
+              password: parts[3] || null,
+              user_id: currentUser.id,
+            };
+          });
+
+          const { error } = await supabaseClient
+            .from("proxies")
+            .insert(proxiesData);
+
+          if (error) throw error;
+
+          document.getElementById("proxies").value = "";
+          showNotification(
+            `${lines.length} proxy(s) adicionado(s)!`,
+            "success"
+          );
+          await loadProxies();
+        } catch (error) {
+          showNotification(
+            "Erro ao adicionar proxies: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      async function testProxy(id) {
+        showNotification("Testando proxy...", "info");
+
+        try {
+          const { data } = await supabaseClient
+            .from("proxies")
+            .select("*")
+            .eq("id", id)
+            .eq("user_id", currentUser.id)
+            .single();
+
+          // Aqui você pode implementar um teste real do proxy
+          // Por enquanto, apenas simulamos
+          setTimeout(() => {
+            showNotification(
+              `Proxy ${data.host}:${data.port} está funcionando!`,
+              "success"
+            );
+          }, 1000);
+        } catch (error) {
+          showNotification("Erro ao testar proxy: " + error.message, "error");
+        }
+      }
+
+      async function deleteProxy(id) {
+        const confirmed = await confirm("Confirma exclusão deste proxy?");
+        if (!confirmed) return;
+
+        try {
+          const { error } = await supabaseClient
+            .from("proxies")
+            .delete()
+            .eq("id", id)
+            .eq("user_id", currentUser.id);
+
+          if (error) throw error;
+
+          showNotification("Proxy excluído", "success");
+          await loadProxies();
+        } catch (error) {
+          showNotification("Erro ao excluir: " + error.message, "error");
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

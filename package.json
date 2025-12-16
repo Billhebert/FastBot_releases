@@ -1,0 +1,59 @@
+{
+  "name": "Fastbot",
+  "version": "1.0.0",
+  "description": "Sistema de automação com macros.",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "keywords": [
+    "automation",
+    "puppeteer",
+    "electron",
+    "macros"
+  ],
+  "author": "",
+  "license": "Proprietary",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "adm-zip": "^0.5.16",
+    "axios": "^1.13.2",
+    "electron-updater": "^6.1.7",
+    "iconv-lite": "^0.7.1",
+    "puppeteer-core": "^21.5.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.0"
+  },
+  "build": {
+    "appId": "com.fastbot.app",
+    "productName": "Fastbot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icons/logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/logo.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "icons/logo.ico"
+    }
+  }
+}

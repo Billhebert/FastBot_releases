@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aquecimento de Perfis</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .warmup-container { max-width: 1200px; margin: 20px auto; padding: 20px; }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center;
+      }
+      .config-section {
+        background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      .config-section h2 { margin-top: 0; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+      .form-group { margin-bottom: 20px; }
+      .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+      .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; }
+      .profile-selector { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+      .profile-btn {
+        width: 50px; height: 50px; border: 2px solid #ddd; border-radius: 8px; background: white;
+        cursor: pointer; font-weight: 600; transition: all 0.3s;
+      }
+      .profile-btn:hover { transform: scale(1.1); }
+      .profile-btn.selected { background: #667eea; color: white; border-color: #667eea; }
+      .profile-btn.warmed { background: #28a745; color: white; border-color: #28a745; }
+      .intensity-options {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;
+      }
+      .intensity-card {
+        border: 2px solid #ddd; border-radius: 8px; padding: 20px; cursor: pointer;
+        transition: all 0.3s; text-align: center;
+      }
+      .intensity-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+      .intensity-card.selected { border-color: #667eea; background: #f0f4ff; }
+      .intensity-card h3 { margin: 0 0 10px 0; color: #667eea; }
+      .intensity-card .icon { font-size: 48px; margin-bottom: 10px; }
+      .tip-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+      .action-buttons { text-align: center; margin-top: 30px; }
+      .btn {
+        padding: 15px 40px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer;
+        font-weight: 600; transition: all 0.3s; margin: 10px;
+      }
+      .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+      .btn-primary:hover { transform: scale(1.05); }
+      .btn-secondary { background: #6c757d; color: white; }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      .log-container {
+        background: #1e1e1e; color: #00ff00; padding: 20px; border-radius: 8px;
+        font-family: "Courier New", monospace; font-size: 13px; max-height: 400px; overflow-y: auto;
+        margin-top: 20px; display: none;
+      }
+      .log-container.active { display: block; }
+      .log-line.success { color: #00ffff; font-weight: bold; }
+      .log-line.error { color: #ff0000; }
+      .log-line.warning { color: #ffd000; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+      .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; padding: 20px; border-radius: 8px; text-align: center;
+      }
+      .stat-card .value { font-size: 36px; font-weight: bold; margin: 10px 0; }
+    </style>
+  </head>
+  <body>
+    <div id="menu-container"></div>
+
+    <div class="warmup-container">
+      <div class="header">
+        <h1>🔥 Aquecimento de Perfis</h1>
+        <p>Reduza CAPTCHAs em até 95%</p>
+      </div>
+
+      <div class="config-section">
+        <h2>⚙️ Configuração</h2>
+
+        <div class="form-group">
+          <label for="device">Dispositivo:</label>
+          <select id="device">
+            <option value="desktop">🖥️ Desktop</option>
+            <option value="mobile">📱 Mobile</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Selecione Perfis (0-19):</label>
+          <div id="profileSelector" class="profile-selector"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Intensidade:</label>
+          <div class="intensity-options">
+            <div class="intensity-card" data-intensity="light">
+              <div class="icon">🌱</div>
+              <h3>Leve</h3>
+              <div>3 sites, ~30s</div>
+              <div>60%</div>
+              <div style="margin-top:10px; color:#555;">proteção básica</div>
+            </div>
+
+            <div class="intensity-card selected" data-intensity="medium">
+              <div class="icon">🔥</div>
+              <h3>Médio</h3>
+              <div>5 sites, ~1min</div>
+              <div>80%</div>
+              <div style="margin-top:10px; color:#555;">proteção recomendada</div>
+            </div>
+
+            <div class="intensity-card" data-intensity="intense">
+              <div class="icon">⚡</div>
+              <h3>Intenso</h3>
+              <div>8 sites, ~2min</div>
+              <div>95%</div>
+              <div style="margin-top:10px; color:#555;">proteção máxima</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <strong>💡 Dica:</strong>
+          Aqueça perfis ANTES de executar macros. Perfis aquecidos têm 90% menos CAPTCHA!
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="startWarmup">🔥 Iniciar Aquecimento</button>
+          <button class="btn btn-secondary" id="stopWarmup" style="display:none;">⏹ Parar</button>
+        </div>
+
+        <div id="logContainer" class="log-container"></div>
+      </div>
+
+      <div id="statsSection" class="config-section" style="display:none;">
+        <h2>📊 Estatísticas</h2>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="label">Aquecidos</div>
+            <div class="value" id="warmedCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Tempo</div>
+            <div class="value" id="totalTime">0s</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Sucesso</div>
+            <div class="value" id="successRate">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="router.js"></script>
+    <script>
+      let selectedProfiles = [];
+      let selectedIntensity = "medium";
+      let isRunning = false;
+      let stats = { warmed: 0, time: 0, success: 0, total: 0 };
+      let currentUser = null;
+
+      function addLog(message, type = "info") {
+        const logContainer = document.getElementById("logContainer");
+        if (!logContainer) return;
+        logContainer.classList.add("active");
+        const line = document.createElement("div");
+        line.className = `log-line ${type}`;
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(line);
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+
+      function updateStats() {
+        document.getElementById("warmedCount").textContent = stats.warmed;
+        document.getElementById("totalTime").textContent = Math.floor(stats.time) + "s";
+
+        if (stats.total > 0) {
+          const rate = Math.round((stats.success / stats.total) * 100);
+          document.getElementById("successRate").textContent = rate + "%";
+        }
+
+        const statsSection = document.getElementById("statsSection");
+        if (statsSection) statsSection.style.display = "block";
+      }
+
+      function toggleProfile(index) {
+        const btn = document.querySelector(`[data-profile="${index}"]`);
+        if (!btn) return;
+        if (btn.classList.contains("warmed")) return;
+
+        if (selectedProfiles.includes(index)) {
+          selectedProfiles = selectedProfiles.filter((p) => p !== index);
+          btn.classList.remove("selected");
+        } else {
+          selectedProfiles.push(index);
+          btn.classList.add("selected");
+        }
+      }
+
+      function initUI() {
+        // menu
+        try {
+          if (typeof createMenu === "function") {
+            document.getElementById("menu-container").innerHTML = createMenu();
+          }
+        } catch {}
+
+        // profiles
+        const profileSelector = document.getElementById("profileSelector");
+        profileSelector.innerHTML = "";
+        for (let i = 0; i < 20; i++) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "profile-btn";
+          btn.textContent = i;
+          btn.dataset.profile = i;
+          btn.onclick = () => toggleProfile(i);
+          profileSelector.appendChild(btn);
+        }
+
+        // intensity selection
+        document.querySelectorAll(".intensity-card").forEach((card) => {
+          card.onclick = () => {
+            document.querySelectorAll(".intensity-card").forEach((c) => c.classList.remove("selected"));
+            card.classList.add("selected");
+            selectedIntensity = card.dataset.intensity || "medium";
+          };
+        });
+
+        // original logic preserved: uses electronAPI.warmupProfile
+        document.getElementById('startWarmup').onclick = async () => {
+          if (selectedProfiles.length === 0) {
+            alert('Selecione pelo menos um perfil!');
+            return;
+          }
+
+          isRunning = true;
+          document.getElementById('startWarmup').style.display = 'none';
+          document.getElementById('stopWarmup').style.display = 'inline-block';
+          addLog(`🔥 Iniciando ${selectedProfiles.length} perfil(is)...`, 'success');
+
+          const startTime = Date.now();
+
+          for (const profileIndex of selectedProfiles) {
+            if (!isRunning) break;
+            stats.total++;
+            addLog(`🔍 Perfil ${profileIndex}...`, 'info');
+
+            try {
+              if (!window.electronAPI?.warmupProfile) {
+                throw new Error("electronAPI.warmupProfile não está disponível");
+              }
+
+              const result = await window.electronAPI.warmupProfile({
+                instanceIndex: profileIndex,
+                device: document.getElementById('device').value,
+                intensity: selectedIntensity
+              });
+
+              if (result && result.success) {
+                stats.warmed++;
+                stats.success++;
+                const btn = document.querySelector(`[data-profile="${profileIndex}"]`);
+                if (btn) {
+                  btn.classList.remove('selected');
+                  btn.classList.add('warmed');
+                }
+                addLog(`✅ Perfil ${profileIndex} OK!`, 'success');
+              } else {
+                addLog(`❌ Erro: ${result?.error || "Falha desconhecida"}`, 'error');
+              }
+            } catch (error) {
+              addLog(`❌ ${error.message}`, 'error');
+            }
+
+            stats.time = (Date.now() - startTime) / 1000;
+            updateStats();
+          }
+
+          addLog(`🏁 Concluído!`, 'success');
+          document.getElementById('startWarmup').style.display = 'inline-block';
+          document.getElementById('stopWarmup').style.display = 'none';
+          isRunning = false;
+        };
+
+        document.getElementById('stopWarmup').onclick = () => {
+          isRunning = false;
+          addLog("⏹ Parando...", "warning");
+          document.getElementById('startWarmup').style.display = 'inline-block';
+          document.getElementById('stopWarmup').style.display = 'none';
+        };
+      }
+
+      window.addEventListener("DOMContentLoaded", async () => {
+        try {
+          if (typeof requirePagePermission === "function") {
+            currentUser = await requirePagePermission("warmup");
+          } else if (typeof requireAuth === "function") {
+            currentUser = await requireAuth();
+          }
+        } catch (error) {
+          console.error("Erro ao validar permissões:", error);
+        }
+
+        if (currentUser) {
+          initUI();
+        }
+      });
+    </script>
+  </body>
+</html>

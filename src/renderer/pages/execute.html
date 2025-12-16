@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang=\"pt-BR\">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Executar Macros</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .execution-config {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .grid-preview {
+        margin: 20px 0;
+        text-align: center;
+      }
+      .grid-visual {
+        display: inline-block;
+        background: #2c3e50;
+        padding: 15px;
+        border-radius: 8px;
+        position: relative;
+        width: 300px;
+        height: 200px;
+      }
+      .grid-cell {
+        position: absolute;
+        background: #3498db;
+        border: 2px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+      .instance-config {
+        background: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid #3498db;
+      }
+      .registration-note {
+        background: #eef6ff;
+        border-left: 4px solid #3498db;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #2c3e50;
+      }
+      .instance-header {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
+      .btn-execute {
+        background: #27ae60;
+        font-size: 18px;
+        padding: 15px;
+        margin-top: 20px;
+      }
+      .execution-log {
+        background: #1e1e1e;
+        color: #0f0;
+        font-family: monospace;
+        padding: 15px;
+        border-radius: 8px;
+        height: 300px;
+        overflow-y: auto;
+        margin-top: 20px;
+      }
+      .execution-log p {
+        margin: 2px 0;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="menu-container"></div>
+
+    <div class="container">
+      <h1> Executar Macros</h1>
+
+      <div class="execution-config">
+        <div class="form-group">
+          <label>Macro:</label>
+          <select id="macro-select" onchange="updateMacroInfo()">
+            <option value="">Selecione um macro</option>
+          </select>
+          <div
+            id="macro-info"
+            style="margin-top: 10px; font-size: 12px; color: #666"
+          ></div>
+        </div>
+
+        <div class="form-group">
+          <label>Quantidade de Janelas:</label>
+          <input
+            type="number"
+            id="instances-count"
+            value="1"
+            min="1"
+            max="12"
+            onchange="updateGridPreview()"
+          />
+          <small>Máximo: 12 janelas</small>
+        </div>
+
+        <div class="grid-preview">
+          <strong>Preview do Grid</strong>
+          <div id="grid-visual-container"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Identificação do cadastro / site:</label>
+          <input
+            type="text"
+            id="registration-site"
+            placeholder="Ex: asdf.com, campanha Instagram, loja XPTO"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Observações (opcional):</label>
+          <textarea
+            id="registration-notes"
+            rows="2"
+            placeholder="Anote campos extras (ex: valor do plano, cupom usado, etc.)"
+          ></textarea>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+          <input type="checkbox" id="registration-save" checked />
+          Registrar automaticamente cada cadastro concluído (email, senha, proxy, PIX...)
+        </label>
+
+        <p class="registration-note" style="margin-top:10px;">
+          Após um macro terminar com sucesso, os dados desta sessão serão salvos na aba <strong>Cadastros</strong> para copiar quando quiser.
+        </p>
+      </div>
+
+      <div id="instances-config" style="display: none">
+        <h3> Configuração Individual</h3>
+        <div id="instances-list"></div>
+      </div>
+
+      <button onclick="executeAll()" class="btn-execute" id="btn-execute">
+        ▶ Executar Macros
+      </button>
+
+      <div class="execution-status">
+        <h3> Status da Execução</h3>
+        <div id="status-summary">Aguardando execução...</div>
+        <div class="execution-log" id="execution-log"></div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="notifications.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="auth.js"></script>
+    <script src="router.js"></script>
+
+    <script>
+      let currentMacro = null;
+      let proxies = [];
+      let passwords = [];
+      let pixKeys = [];
+      let currentUser = null;
+
+      async function init() {
+        currentUser = await requirePagePermission("execute");
+        if (!currentUser) return;
+        document.getElementById("menu-container").innerHTML = createMenu();
+        await loadMacros();
+        await loadProxies();
+        await loadPasswords();
+        await loadPixKeys();
+      }
+
+      async function loadMacros() {
+        const { data } = await supabaseClient
+          .from("macros")
+          .select("*")
+          .eq("enabled", true)
+          .order("name");
+
+        const select = document.getElementById("macro-select");
+        select.innerHTML = '<option value="">Selecione um macro</option>';
+
+        if (data && data.length > 0) {
+          data.forEach((macro) => {
+            const option = document.createElement("option");
+            option.value = macro.id;
+            option.textContent = `${macro.name} (${macro.device_type})`;
+            select.appendChild(option);
+          });
+        }
+      }
+
+      async function loadProxies() {
+        const { data } = await supabaseClient
+          .from("proxies")
+          .select("*")
+          .eq("user_id", currentUser.id);
+        proxies = data || [];
+      }
+
+      async function loadPasswords() {
+        const { data } = await supabaseClient
+          .from("passwords")
+          .select("*")
+          .eq("user_id", currentUser.id);
+        passwords = data || [];
+      }
+
+      async function loadPixKeys() {
+        const { data } = await supabaseClient
+          .from("pix_keys")
+          .select("*")
+          .eq("user_id", currentUser.id);
+        pixKeys = data || [];
+      }
+
+      async function updateMacroInfo() {
+        const macroId = document.getElementById("macro-select").value;
+        if (!macroId) {
+          currentMacro = null;
+          document.getElementById("macro-info").innerHTML = "";
+          return;
+        }
+
+        const { data } = await supabaseClient
+          .from("macros")
+          .select("*")
+          .eq("id", macroId)
+          .single();
+
+        currentMacro = data;
+
+        if (data) {
+          const actions = JSON.parse(data.actions || "[]");
+          document.getElementById("macro-info").innerHTML = `
+            <strong>${data.name}</strong><br>
+            Device: ${data.device_type}<br>
+            Ações: ${actions.length}<br>
+            Delay: ${data.delay_min || 500}ms - ${data.delay_max || 2000}ms
+          `;
+          
+          console.log('ℹ Macro selecionado:', data);
+          updateGridPreview();
+        }
+      }
+
+      function updateGridPreview() {
+        const count = parseInt(document.getElementById("instances-count").value) || 1;
+        
+        if (!currentMacro) {
+          document.getElementById("grid-visual-container").innerHTML = '<p>Selecione um macro primeiro</p>';
+          return;
+        }
+
+        const device = currentMacro.device_type;
+        const positions = calculatePositions(count, device);
+
+        const container = document.getElementById("grid-visual-container");
+        let html = `<div class="grid-visual">`;
+
+        positions.forEach((pos, i) => {
+          const left = ((pos.x / 1920) * 100).toFixed(1);
+          const top = ((pos.y / 1080) * 100).toFixed(1);
+          const width = ((pos.width / 1920) * 100).toFixed(1);
+          const height = ((pos.height / 1080) * 100).toFixed(1);
+
+          html += `<div class="grid-cell" style="left:${left}%; top:${top}%; width:${width}%; height:${height}%;">${
+            i + 1
+          }</div>`;
+        });
+
+        html += `</div>`;
+        html += `<p style="margin-top: 10px;"><strong>${count}</strong> janela${
+          count > 1 ? "s" : ""
+        } - <strong>${device}</strong></p>`;
+
+        document.getElementById("grid-visual-container").innerHTML = html;
+
+        renderInstancesConfig(count);
+      }
+
+      function renderInstancesConfig(count) {
+        const container = document.getElementById("instances-list");
+        let html = "";
+
+        for (let i = 0; i < count; i++) {
+          html += `
+          <div class="instance-config">
+            <div class="instance-header"> Janela ${i + 1}</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div>
+                <label style="font-size: 12px;">Proxy:</label>
+                <select id="proxy-${i}" style="width: 100%; padding: 5px;">
+                  <option value="">Sem proxy</option>
+                  ${proxies
+                    .map(
+                      (p) =>
+                        `<option value="${p.id}">${p.host}:${p.port}</option>`
+                    )
+                    .join("")}
+                </select>
+              </div>
+              
+              <div>
+                <label style="font-size: 12px;">Senha:</label>
+                <select id="password-${i}" style="width: 100%; padding: 5px;">
+                  <option value="">Sem senha</option>
+                  ${passwords
+                    .map((p) => `<option value="${p.id}">${p.label}</option>`)
+                    .join("")}
+                </select>
+              </div>
+              
+              <div>
+                <label style="font-size: 12px;">PIX:</label>
+                <select id="pix-${i}" style="width: 100%; padding: 5px;">
+                  <option value="">Sem PIX</option>
+                  ${pixKeys
+                    .map(
+                      (p) =>
+                        `<option value="${p.id}">${p.key.substring(
+                          0,
+                          20
+                        )}...</option>`
+                    )
+                    .join("")}
+                </select>
+              </div>
+            </div>
+          </div>
+        `;
+        }
+
+        container.innerHTML = html;
+        document.getElementById("instances-config").style.display = "block";
+      }
+
+      async function executeAll() {
+        if (!currentMacro) {
+          showNotification("Selecione um macro", "warning");
+          return;
+        }
+
+        const count = parseInt(document.getElementById("instances-count").value) || 1;
+        const siteLabel = document.getElementById("registration-site").value.trim();
+        const notes = document.getElementById("registration-notes").value.trim();
+        const shouldRegister = document.getElementById("registration-save").checked;
+        const device = currentMacro.device_type; // Usar device do macro salvo
+
+        console.log('ℹ Iniciando execução...');
+        console.log('   Macro:', currentMacro.name);
+        console.log('   Device:', device);
+        console.log('   Instâncias:', count);
+
+        document.getElementById("btn-execute").disabled = true;
+
+        const logContainer = document.getElementById("execution-log");
+        const statusSummary = document.getElementById("status-summary");
+
+        logContainer.innerHTML = "";
+        statusSummary.innerHTML = `Executando ${count} instância(s)...`;
+
+        function log(msg, type = "info") {
+          const colors = {
+            info: "#0f0",
+            success: "#0f0",
+            warning: "#ff0",
+            error: "#f00",
+          };
+          logContainer.innerHTML += `<p style="color: ${
+            colors[type]
+          }">[${new Date().toLocaleTimeString()}] ${msg}</p>`;
+          logContainer.scrollTop = logContainer.scrollHeight;
+          console.log(`[${type.toUpperCase()}] ${msg}`);
+        }
+
+        log("ℹ Iniciando execução...", "info");
+        log(`ℹ Macro: ${currentMacro.name}`, "info");
+        log(` Device: ${device}`, "info");
+
+        const positions = calculatePositions(count, device);
+        const instances = [];
+
+        for (let i = 0; i < count; i++) {
+          const proxyId = document.getElementById(`proxy-${i}`)?.value;
+          const passwordId = document.getElementById(`password-${i}`)?.value;
+          const pixId = document.getElementById(`pix-${i}`)?.value;
+          const proxy = proxyId ? proxies.find((p) => p.id === proxyId) : null;
+          const passwordEntry = passwordId ? passwords.find((p) => p.id === passwordId) : null;
+          const pixEntry = pixId ? pixKeys.find((p) => p.id === pixId) : null;
+
+          instances.push({
+            index: i,
+            position: positions[i],
+            proxy,
+            password: passwordEntry,
+            pix: pixEntry,
+            email: generateRandomEmail(),
+            siteLabel,
+            notes,
+          });
+        }
+
+        log(`ℹ ${instances.length} instâncias configuradas`, "info");
+
+        const promises = instances.map(async (instance) => {
+          log(` [Janela ${instance.index + 1}] Iniciando...`, "info");
+
+          try {
+            const config = {
+              actions: JSON.parse(currentMacro.actions),
+              device: device,
+              position: instance.position,
+              proxy: instance.proxy,
+              password: instance.password?.password || null,
+              pixKey: instance.pix?.key || null,
+              email: instance.email,
+              instanceIndex: instance.index,
+              delayMin: currentMacro.delay_min || 500,
+              delayMax: currentMacro.delay_max || 2000
+            };
+
+            console.log(` Config para janela ${instance.index + 1}:`, config);
+
+            const result = await window.electronAPI.executeMacro(config);
+
+            if (result.success) {
+              log(`[Janela ${instance.index + 1}] Concluido`, "success");
+              await trackMacroExecution(currentUser.id, currentMacro.id);
+
+              if (shouldRegister && typeof saveRegistration === "function") {
+                try {
+                  await saveRegistration({
+                    user_id: currentUser.id,
+                    macro_id: currentMacro.id,
+                    macro_name: currentMacro.name,
+                    device_type: currentMacro.device_type,
+                    instance_index: instance.index,
+                    site_label: instance.siteLabel || currentMacro.name,
+                    notes: instance.notes || null,
+                    email: instance.email,
+                    password_id: instance.password?.id || null,
+                    password_label: instance.password?.label || null,
+                    password_value: instance.password?.password || null,
+                    pix_id: instance.pix?.id || null,
+                    pix_key: instance.pix?.key || null,
+                    pix_type: instance.pix?.key_type || null,
+                    proxy_id: instance.proxy?.id || null,
+                    proxy_host: instance.proxy?.host || null,
+                    proxy_port: instance.proxy?.port || null,
+                    proxy_username: instance.proxy?.username || null,
+                    proxy_password: instance.proxy?.password || null,
+                    status: "success",
+                  });
+                  log(
+                    `[Janela ${instance.index + 1}] Cadastro salvo (${instance.email})`,
+                    "success"
+                  );
+                } catch (saveError) {
+                  log(
+                    `[Janela ${instance.index + 1}] Erro ao salvar cadastro: ${saveError.message}`,
+                    "error"
+                  );
+                }
+              }
+            } else {
+              log(`[Janela ${instance.index + 1}] Falhou: ${result.error}`, "error");
+            }
+          } catch (error) {
+            log(
+              ` [Janela ${instance.index + 1}] Erro: ${error.message}`,
+              "error"
+            );
+            console.error("Erro completo:", error);
+          }
+        });
+
+        await Promise.all(promises);
+
+        statusSummary.innerHTML = `Execução finalizada!`;
+        log("ℹ Todas as instâncias finalizadas!", "success");
+        document.getElementById("btn-execute").disabled = false;
+      }
+
+      function calculatePositions(count, device) {
+        const screenWidth = 1920;
+        const screenHeight = 1080;
+
+        if (device === "mobile") {
+          const windowWidth = 400;
+          const windowHeight = 844;
+          const cols = Math.min(Math.ceil(Math.sqrt(count)), 4);
+          const rows = Math.ceil(count / cols);
+
+          const positions = [];
+          for (let i = 0; i < count; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            positions.push({
+              x: col * (windowWidth + 10),
+              y: row * (windowHeight + 10),
+              width: windowWidth,
+              height: windowHeight,
+            });
+          }
+          return positions;
+        }
+
+        // Desktop
+        const cols = Math.min(Math.ceil(Math.sqrt(count)), 4);
+        const rows = Math.ceil(count / cols);
+        const windowWidth = Math.floor(screenWidth / cols);
+        const windowHeight = Math.floor(screenHeight / rows);
+
+        const positions = [];
+        for (let i = 0; i < count; i++) {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          positions.push({
+            x: col * windowWidth,
+            y: row * windowHeight,
+            width: windowWidth,
+            height: windowHeight,
+          });
+        }
+        return positions;
+      }
+
+      function generateRandomEmail() {
+        const random = Math.random().toString(36).substring(7);
+        return `user_${random}@test.com`;
+      }
+
+      init();
+    </script>
+  </body>
+</html>

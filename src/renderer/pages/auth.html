@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h1>Fastbot</h1>
+      
+      <div id="login-form" class="form-section">
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Senha" required>
+        <button onclick="handleLogin()">Entrar</button>
+        <p>Não tem conta? <a href="#" onclick="toggleForm(); return false;">Cadastre-se</a></p>
+      </div>
+
+      <div id="signup-form" class="form-section" style="display: none;">
+        <h2>Cadastro</h2>
+        <input type="email" id="signup-email" placeholder="Email" required>
+        <input type="password" id="signup-password" placeholder="Senha (mín. 6 caracteres)" required>
+        <button onclick="handleSignup()">Cadastrar</button>
+        <p>Já tem conta? <a href="#" onclick="toggleForm(); return false;">Faça login</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    function showNotification(message, type = 'info') {
+      const existing = document.getElementById('notification');
+      if (existing) existing.remove();
+      
+      const notification = document.createElement('div');
+      notification.id = 'notification';
+      notification.className = `notification notification-${type}`;
+      notification.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()">×</button>`;
+      document.body.appendChild(notification);
+      setTimeout(() => { if (notification.parentElement) notification.remove(); }, 5000);
+    }
+  </script>
+
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="router.js"></script>
+  
+  <script>
+    function toggleForm() {
+      const loginForm = document.getElementById('login-form');
+      const signupForm = document.getElementById('signup-form');
+      
+      if (loginForm.style.display === 'none') {
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+      } else {
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showNotification('Preencha email e senha', 'warning');
+        return;
+      }
+
+      try {
+        await login(email, password);
+        showNotification('Login realizado!', 'success');
+        setTimeout(() => navigate('execute'), 1000);
+      } catch (error) {
+        showNotification(error.message, 'error');
+      }
+    }
+
+    async function handleSignup() {
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      if (!email || !password) {
+        showNotification('Preencha email e senha', 'warning');
+        return;
+      }
+
+      if (password.length < 6) {
+        showNotification('Senha deve ter no mínimo 6 caracteres', 'warning');
+        return;
+      }
+
+      try {
+        await signup(email, password);
+        showNotification('Cadastro realizado! Faça login.', 'success');
+        setTimeout(() => toggleForm(), 2000);
+      } catch (error) {
+        showNotification(error.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Teste de Captura</title>
+</head>
+<body>
+  <h1>Teste de Captura de Eventos</h1>
+  
+  <button id="test-btn">Clique Aqui</button>
+  <br><br>
+  <input id="test-input" placeholder="Digite algo">
+  <br><br>
+  <select id="test-select">
+    <option value="1">Opção 1</option>
+    <option value="2">Opção 2</option>
+  </select>
+  <br><br>
+  <button onclick="showActions()">Ver Ações Gravadas</button>
+
+  <script>
+    // Mesmo script do recorder
+    window.__recordedActions = [];
+
+    function getSelector(el) {
+      if (!el || !el.tagName) return 'unknown';
+      if (el.id) return '#' + el.id;
+      if (el.name) return '[name="' + el.name + '"]';
+      if (el.className && typeof el.className === 'string') {
+        const classes = el.className.trim().split(/\s+/);
+        if (classes.length > 0 && classes[0]) return '.' + classes[0];
+      }
+      if (el.placeholder) return '[placeholder="' + el.placeholder + '"]';
+      return el.tagName.toLowerCase();
+    }
+
+    window.addEventListener('click', function(e) {
+      const action = {
+        type: 'click',
+        selector: getSelector(e.target),
+        x: e.clientX,
+        y: e.clientY
+      };
+      window.__recordedActions.push(action);
+      console.log('CLICK:', action);
+    }, true);
+
+    window.addEventListener('input', function(e) {
+      const action = {
+        type: 'input',
+        selector: getSelector(e.target),
+        value: e.target.value
+      };
+      window.__recordedActions.push(action);
+      console.log('INPUT:', action);
+    }, true);
+
+    window.addEventListener('change', function(e) {
+      if (e.target.tagName === 'SELECT') {
+        const action = {
+          type: 'select',
+          selector: getSelector(e.target),
+          value: e.target.value
+        };
+        window.__recordedActions.push(action);
+        console.log('SELECT:', action);
+      }
+    }, true);
+
+    function showActions() {
+      alert('Ações gravadas: ' + window.__recordedActions.length + '\n\n' + 
+            JSON.stringify(window.__recordedActions, null, 2));
+    }
+  </script>
+</body>
+</html>

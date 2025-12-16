@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cadastros</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .registrations-container {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .registration-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .registration-body {
+        flex: 1;
+      }
+      .registration-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px 16px;
+        font-size: 13px;
+        margin-top: 10px;
+      }
+      .registration-meta span {
+        display: block;
+        font-family: monospace;
+        background: #f4f6f8;
+        padding: 4px 6px;
+        border-radius: 4px;
+        word-break: break-all;
+      }
+      .card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 150px;
+      }
+      .card-actions button {
+        width: 100%;
+      }
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .filters input, .filters select {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      .empty-state {
+        padding: 30px;
+        text-align: center;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px dashed #ccc;
+        color: #666;
+      }
+      .notes {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #444;
+        background: #fdf9e3;
+        border-left: 3px solid #f1c40f;
+        padding: 6px 10px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="menu-container"></div>
+    <div class="container">
+      <h1>Cadastros concluídos</h1>
+      <p>Todos os dados registrados automaticamente após uma execução bem-sucedida.</p>
+
+      <div class="filters">
+        <input type="text" id="search-text" placeholder="Buscar por site, macro, email..." oninput="applyFilters()" />
+        <select id="filter-macro" onchange="applyFilters()">
+          <option value="">Todos os macros</option>
+        </select>
+        <input type="date" id="filter-date" onchange="applyFilters()" />
+        <button onclick="loadRegistrations()">Atualizar</button>
+      </div>
+
+      <div id="registrations-container" class="registrations-container">Carregando...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="notifications.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="auth.js"></script>
+    <script src="router.js"></script>
+    <script>
+      let currentUser = null;
+      let allRegistrations = [];
+
+      async function init() {
+        currentUser = await requirePagePermission("registrations");
+        if (!currentUser) return;
+        document.getElementById("menu-container").innerHTML = createMenu();
+        await loadRegistrations();
+      }
+
+      async function loadRegistrations() {
+        const container = document.getElementById("registrations-container");
+        container.innerHTML = "<p>Carregando...</p>";
+
+        try {
+          const { data, error } = await supabaseClient
+            .from("registrations")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+
+          allRegistrations = data || [];
+          populateMacroFilter();
+          renderRegistrations(allRegistrations);
+        } catch (err) {
+          console.error(err);
+          container.innerHTML = "<p>Erro ao carregar cadastros.</p>";
+          showNotification("Erro ao carregar cadastros: " + err.message, "error");
+        }
+      }
+
+      function populateMacroFilter() {
+        const select = document.getElementById("filter-macro");
+        const selected = select.value;
+        const macros = [...new Set(allRegistrations.map((r) => r.macro_name).filter(Boolean))];
+        select.innerHTML = '<option value="">Todos os macros</option>' + macros.map((name) => `<option value="${name}">${name}</option>`).join("");
+        if (macros.includes(selected)) {
+          select.value = selected;
+        }
+      }
+
+      function applyFilters() {
+        const text = document.getElementById("search-text").value.toLowerCase();
+        const macro = document.getElementById("filter-macro").value;
+        const date = document.getElementById("filter-date").value;
+
+        const filtered = allRegistrations.filter((reg) => {
+          const matchesText =
+            !text ||
+            [reg.site_label, reg.macro_name, reg.email, reg.pix_key, reg.proxy_host]
+              .filter(Boolean)
+              .some((value) => value.toLowerCase().includes(text));
+
+          const matchesMacro = !macro || reg.macro_name === macro;
+
+          const matchesDate =
+            !date ||
+            (reg.created_at && reg.created_at.startsWith(date));
+
+          return matchesText && matchesMacro && matchesDate;
+        });
+
+        renderRegistrations(filtered);
+      }
+
+      function renderRegistrations(list) {
+        const container = document.getElementById("registrations-container");
+
+        if (!list.length) {
+          container.innerHTML = '<div class="empty-state">Nenhum cadastro registrado ainda.</div>';
+          return;
+        }
+
+        container.innerHTML = list
+          .map((reg) => {
+            const proxyInfo = reg.proxy_host
+              ? `${reg.proxy_host}:${reg.proxy_port || ""}${reg.proxy_username ? " | " + reg.proxy_username : ""}`
+              : "Sem proxy";
+
+            return `
+              <div class="registration-card">
+                <div class="registration-body">
+                  <strong>${reg.site_label || reg.macro_name || "Cadastro"}</strong>
+                  <div style="font-size:12px; color:#666;">
+                    Macro: ${reg.macro_name || "-"} • ${formatDate(reg.created_at)}
+                  </div>
+                  <div class="registration-meta">
+                    <div>
+                      <small>Email</small>
+                      <span>${reg.email || "-"}</span>
+                    </div>
+                    <div>
+                      <small>Senha</small>
+                      <span>${reg.password_value || "-"}</span>
+                    </div>
+                    <div>
+                      <small>PIX</small>
+                      <span>${reg.pix_key || "-"}</span>
+                    </div>
+                    <div>
+                      <small>Proxy</small>
+                      <span>${proxyInfo}</span>
+                    </div>
+                  </div>
+                  ${
+                    reg.notes
+                      ? `<div class="notes">${reg.notes}</div>`
+                      : ""
+                  }
+                </div>
+                <div class="card-actions">
+                  <button onclick="copyLine('${escapeQuotes(reg.email)}', 'Email copiado')">Copiar email</button>
+                  <button onclick="copyLine('${escapeQuotes(reg.password_value)}', 'Senha copiada')">Copiar senha</button>
+                  <button onclick="copyLine('${escapeQuotes(formatSummary(reg))}', 'Resumo copiado')">Copiar resumo</button>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function copyLine(text, successMsg) {
+        if (!text) {
+          showNotification("Nada para copiar", "warning");
+          return;
+        }
+        navigator.clipboard
+          .writeText(text)
+          .then(() => showNotification(successMsg, "success"))
+          .catch((err) => showNotification("Erro ao copiar: " + err.message, "error"));
+      }
+
+      function formatSummary(reg) {
+        return [
+          `Site: ${reg.site_label || "-"}`,
+          `Macro: ${reg.macro_name || "-"}`,
+          `Email: ${reg.email || "-"}`,
+          `Senha: ${reg.password_value || "-"}`,
+          `PIX: ${reg.pix_key || "-"}`,
+          `Proxy: ${reg.proxy_host || "-"}:${reg.proxy_port || ""}`
+        ]
+          .filter(Boolean)
+          .join(" | ");
+      }
+
+      function escapeQuotes(text) {
+        const safe = (text ?? "").toString();
+        return safe.replace(/["']/g, "\\$&");
+      }
+
+      function formatDate(value) {
+        if (!value) return "-";
+        try {
+          return new Date(value).toLocaleString();
+        } catch {
+          return value;
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
