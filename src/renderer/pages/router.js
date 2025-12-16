@@ -59,3 +59,51 @@ function createMenu() {
     </nav>
   `;
 }
+
+(function initTitlebar() {
+  const setup = () => {
+    if (document.querySelector('.titlebar')) return;
+    const bar = document.createElement('div');
+    bar.className = 'titlebar';
+    bar.innerHTML = `
+      <div class="title">Fastbot</div>
+      <div class="window-actions">
+        <button class="win-btn minimize" title="Minimizar" aria-label="Minimizar">
+          <svg width="10" height="2" viewBox="0 0 10 2" aria-hidden="true"><rect width="10" height="2" rx="1" /></svg>
+        </button>
+        <button class="win-btn maximize" title="Maximizar" aria-label="Maximizar">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="1" fill="none" stroke-width="2" /></svg>
+        </button>
+        <button class="win-btn close" title="Fechar" aria-label="Fechar">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <line x1="1" y1="1" x2="9" y2="9" stroke-width="2"/>
+            <line x1="9" y1="1" x2="1" y2="9" stroke-width="2"/>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    document.body.prepend(bar);
+
+    if (!document.querySelector('.titlebar-spacer')) {
+      const spacer = document.createElement('div');
+      spacer.className = 'titlebar-spacer';
+      document.body.insertBefore(spacer, bar.nextSibling);
+    }
+
+    const controls = window.electronAPI?.windowControls;
+    if (!controls) return;
+
+    bar.querySelector('.minimize')?.addEventListener('click', () => controls.minimize());
+    bar.querySelector('.maximize')?.addEventListener('click', () => controls.maximize());
+    bar.querySelector('.close')?.addEventListener('click', () => controls.close());
+
+    bar.addEventListener('dblclick', () => controls.maximize());
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();

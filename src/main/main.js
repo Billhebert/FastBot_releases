@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 
@@ -8,6 +8,10 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    minWidth: 1024,
+    minHeight: 650,
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -17,12 +21,16 @@ function createWindow() {
     icon: path.join(__dirname, '../../icons/logo.ico') // Ícone da aplicação
   });
 
+  mainWindow.setMenu(null);
+
   // Arquivo auth.html está na raiz do projeto
   mainWindow.loadFile(path.join(__dirname, '../renderer/pages/auth.html'));
   autoUpdater.checkForUpdatesAndNotify();
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId('com.fastbot.app');
+  Menu.setApplicationMenu(null);
   createWindow();
 
   app.on('activate', () => {
@@ -118,5 +126,23 @@ ipcMain.handle('warmup-profile', async (event, config) => {
       success: false,
       error: error.message
     };
+  }
+});
+ipcMain.handle('window-control', (event, action) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return;
+
+  switch (action) {
+    case 'minimize':
+      win.minimize();
+      break;
+    case 'maximize':
+      win.isMaximized() ? win.restore() : win.maximize();
+      break;
+    case 'close':
+      win.close();
+      break;
+    default:
+      break;
   }
 });

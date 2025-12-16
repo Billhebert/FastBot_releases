@@ -6,5 +6,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   executeMacro: (config) => ipcRenderer.invoke('execute-macro', config),
   warmupProfile: (config) => ipcRenderer.invoke('warmup-profile', config),
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', callback),
-  onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', callback)
+  onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', callback),
+  windowControls: {
+    minimize: () => ipcRenderer.invoke('window-control', 'minimize'),
+    maximize: () => ipcRenderer.invoke('window-control', 'maximize'),
+    close: () => ipcRenderer.invoke('window-control', 'close')
+  }
 });

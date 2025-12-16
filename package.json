@@ -1,6 +1,6 @@
 {
   "name": "Fastbot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sistema de automação com macros.",
   "main": "src/main/main.js",
   "scripts": {
@@ -42,6 +42,14 @@
     "files": [
       "src/**/*",
       "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Billhebert",
+        "repo": "FastBot",
+        "releaseType": "draft"
+      }
     ],
     "win": {
       "target": "nsis",
