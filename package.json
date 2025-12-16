@@ -47,7 +47,7 @@
       {
         "provider": "github",
         "owner": "Billhebert",
-        "repo": "FastBot",
+        "repo": "FastBot_releases",
         "releaseType": "draft"
       }
     ],
