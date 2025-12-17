@@ -1,6 +1,6 @@
 {
   "name": "Fastbot",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Sistema de automação com macros.",
   "main": "src/main/main.js",
   "scripts": {

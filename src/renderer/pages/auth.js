@@ -54,10 +54,7 @@ async function login(email, password) {
       throw new Error("Acesso expirado. Entre em contato com o administrador.");
     }
 
-    const hasActive = await hasActiveSession(data.id);
-    if (hasActive) {
-      throw new Error("Este usuário já possui uma sessão ativa em outro dispositivo.");
-    }
+    await revokeActiveSessions(data.id);
 
     const sessionToken = generateSessionToken();
 
@@ -187,20 +184,15 @@ function generateSessionToken() {
   );
 }
 
-async function hasActiveSession(userId) {
+async function revokeActiveSessions(userId) {
   try {
-    const { data } = await supabaseClient
+    await supabaseClient
       .from("user_sessions")
-      .select("id")
+      .update({ revoked_at: new Date().toISOString() })
       .eq("user_id", userId)
-      .is("revoked_at", null)
-      .limit(1)
-      .maybeSingle();
-
-    return !!data;
+      .is("revoked_at", null);
   } catch (error) {
-    console.error("Erro ao verificar sessões ativas:", error);
-    return false;
+    console.error("Erro ao revogar sessões antigas:", error);
   }
 }
 
