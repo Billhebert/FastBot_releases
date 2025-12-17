@@ -138,6 +138,14 @@
         <p class="registration-note" style="margin-top:10px;">
           Após um macro terminar com sucesso, os dados desta sessão serão salvos na aba <strong>Cadastros</strong> para copiar quando quiser.
         </p>
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-top:10px;">
+          <input type="checkbox" id="fresh-session" />
+          Abrir cada janela com sessão limpa (não reutiliza cookies gravados)
+        </label>
+        <small style="display:block; color:#666; margin-top:4px;">
+          Deixe desmarcado para reaproveitar o login gravado e evitar novos CAPTCHAs.
+        </small>
       </div>
 
       <div id="instances-config" style="display: none">
@@ -355,6 +363,7 @@
         const siteLabel = document.getElementById("registration-site").value.trim();
         const notes = document.getElementById("registration-notes").value.trim();
         const shouldRegister = document.getElementById("registration-save").checked;
+        const freshSession = document.getElementById("fresh-session").checked;
         const device = currentMacro.device_type; // Usar device do macro salvo
 
         console.log('ℹ Iniciando execução...');
@@ -387,6 +396,7 @@
         log("ℹ Iniciando execução...", "info");
         log(`ℹ Macro: ${currentMacro.name}`, "info");
         log(` Device: ${device}`, "info");
+        log(` Sessão limpa: ${freshSession ? "sim" : "não"}`, "info");
 
         const positions = calculatePositions(count, device);
         const instances = [];
@@ -406,6 +416,8 @@
             password: passwordEntry,
             pix: pixEntry,
             email: generateRandomEmail(),
+            username: generateRandomUsername(),
+            phone: generateBrPhone(),
             siteLabel,
             notes,
           });
@@ -425,9 +437,12 @@
               password: instance.password?.password || null,
               pixKey: instance.pix?.key || null,
               email: instance.email,
+              username: instance.username,
+              phoneNumber: instance.phone,
               instanceIndex: instance.index,
               delayMin: currentMacro.delay_min || 500,
-              delayMax: currentMacro.delay_max || 2000
+              delayMax: currentMacro.delay_max || 2000,
+              freshSession
             };
 
             console.log(` Config para janela ${instance.index + 1}:`, config);
@@ -539,6 +554,24 @@
       function generateRandomEmail() {
         const random = Math.random().toString(36).substring(7);
         return `user_${random}@test.com`;
+      }
+
+      function generateRandomUsername() {
+        const chars = "abcdefghijklmnopqrstuvwxyz";
+        let result = "";
+        for (let i = 0; i < 12; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      }
+
+      function generateBrPhone() {
+        const ddd = Math.floor(Math.random() * 90) + 10;
+        let suffix = "";
+        for (let i = 0; i < 8; i++) {
+          suffix += Math.floor(Math.random() * 10);
+        }
+        return `${ddd}9${suffix}`;
       }
 
       init();

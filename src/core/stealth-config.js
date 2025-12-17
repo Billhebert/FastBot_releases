@@ -36,7 +36,7 @@ function getStealthArgs(device, position) {
   
   // Args comuns (sempre incluir)
   baseArgs.push(
-    '--disable-blink-features=AutomationControlled',
+
     '--no-first-run',
     '--no-service-autorun',
     '--password-store=basic',

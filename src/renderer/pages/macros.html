@@ -26,6 +26,21 @@
           </select>
         </div>
         <div class="form-group">
+          <label>URL inicial (opcional):</label>
+          <input
+            type="text"
+            id="start-url"
+            placeholder="https://site.com ou deixe em branco para Google"
+          />
+          <small style="color:#666;">Use quando precisar abrir direto em uma p&aacute;gina espec&iacute;fica.</small>
+        </div>
+        <div class="form-group">
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px;">
+            <input type="checkbox" id="record-fresh-session" />
+            Iniciar com navegador limpo (sem cookies/logins salvos)
+          </label>
+        </div>
+        <div class="form-group">
           <label>Nome do Macro:</label>
           <input type="text" id="macro-name" placeholder="Ex: Login Facebook" />
         </div>
@@ -117,6 +132,7 @@
       function hideRecordingPanel() {
         document.getElementById("recording-panel").style.display = "none";
         document.getElementById("macro-name").value = "";
+        document.getElementById("start-url").value = "";
       }
 
       function updateActionsButton(mode) {
@@ -136,6 +152,7 @@
       async function startRecording() {
         const name = document.getElementById("macro-name").value.trim();
         const deviceType = document.getElementById("device-type").value;
+        const startUrl = document.getElementById("start-url").value.trim();
 
         if (!name) {
           showNotification("Digite um nome para o macro", "warning");
@@ -154,7 +171,11 @@
             throw new Error("electronAPI.startRecording não está disponível");
           }
 
-          await window.electronAPI.startRecording(deviceType);
+          await window.electronAPI.startRecording({
+            device: deviceType,
+            freshSession: document.getElementById("record-fresh-session").checked,
+            startUrl: startUrl || null
+          });
           showNotification("Gravação iniciada! Faça as ações no navegador...", "success");
           updateActionsButton("recording");
         } catch (error) {

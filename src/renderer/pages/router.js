@@ -4,7 +4,7 @@ const ROUTER_PERMISSIONS =
   window.APP_PERMISSIONS || {
     dev: ["macros", "pix", "proxies", "passwords", "execute", "warmup", "registrations"],
     creator: ["macros", "pix"],
-    consumer: ["proxies", "passwords", "pix", "execute"],
+    consumer: ["proxies", "passwords", "pix", "execute", "registrations"],
   };
 
 function navigate(page) {

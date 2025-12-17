@@ -2,11 +2,42 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { findChrome } = require('./chrome-finder.js');
 const { getOrCreateProfile, getStealthArgs } = require('./stealth-config.js');
-const { syncCookiesFromRecording } = require('./cookie-sync.js');
+const { syncCookiesFromRecording, syncPartitionFromRecording, clearProfileData } = require('./cookie-sync.js');
 const { getAgentByInstance, getAgentFingerprintScript } = require('./agents.js');
 const { warmUpProfile } = require('./profile-warmer.js');
+const { createShellSession, getMobilePartition, getPartitionPath } = require('./mobile-shell-session');
 
 puppeteer.use(StealthPlugin());
+
+const DEVICE_PROFILES = {
+  desktop: {
+    windowSize: '1400,900',
+    userAgent: null,
+    viewport: {
+      width: 1366,
+      height: 768,
+      deviceScaleFactor: 1,
+      isMobile: false,
+      hasTouch: false
+    },
+    headers: {}
+  },
+  mobile: {
+    windowSize: '420,900',
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+    viewport: {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true
+    },
+    headers: {
+      'Sec-CH-UA-Mobile': '?1',
+      'Sec-CH-UA-Platform': '"iOS"'
+    }
+  }
+};
 
 // ============================================
 // CONFIGURAÇÕES ANTI-CAPTCHA
@@ -216,79 +247,126 @@ async function solveWithCapSolver(page) {
 // EXECUTAR MACRO COM PROTEÇÃO ANTI-CAPTCHA
 // ============================================
 
+
 async function executeMacro(config) {
-  const { actions, device, position, proxy, password, pixKey, email, instanceIndex, delayMin, delayMax } = config;
-  
+  const {
+    actions,
+    device,
+    position,
+    proxy,
+    password,
+    pixKey,
+    email,
+    username,
+    phoneNumber,
+    instanceIndex,
+    delayMin,
+    delayMax,
+    freshSession = false
+  } = config;
+
   console.log('\n========================================');
-    console.log(`🚀 EXECUTANDO INSTÂNCIA ${instanceIndex + 1}`);
+  console.log(`>> EXECUTANDO INSTANCIA ${instanceIndex + 1}`);
   console.log('========================================');
-  console.log('🛡️  Modo: ANTI-CAPTCHA HÍBRIDO');
-  console.log('📋 Ações:', actions.length);
-  console.log('📋 Device:', device);
-  
+  console.log('>> Modo: ANTI-CAPTCHA HIBRIDO');
+  console.log('>> Acoes:', actions.length);
+  console.log('>> Device:', device);
+  console.log('>> Sessao limpa:', freshSession);
+
   if (CAPTCHA_CONFIG.warmUpBeforeExecution) {
-    console.log('🔥 Aquecimento: ATIVADO');
+    console.log('>> Aquecimento: ATIVADO');
   }
   if (CAPTCHA_CONFIG.useCapSolver) {
-    console.log('🧠 CapSolver: ATIVADO');
+    console.log('>> CapSolver: ATIVADO');
   }
   if (CAPTCHA_CONFIG.manualCaptchaSolve) {
-    console.log('🧩 Resolução Manual: ATIVADO');
+    console.log('>> Resolucao manual: ATIVADA');
   }
   if (CAPTCHA_CONFIG.humanDelays) {
-    console.log(`⏱️  Delays: ${CAPTCHA_CONFIG.delayMultiplier}x mais humanos`);
+    console.log(`>> Delays: ${CAPTCHA_CONFIG.delayMultiplier}x mais humanos`);
   }
 
+  const useEmbeddedShell = device === 'mobile';
+
   let browser = null;
+  let shellSession = null;
+  let page = null;
   let currentAgent = null;
 
   try {
-    const chromePath = findChrome();
-    
-    // AQUECER PERFIL ANTES (OPCIONAL)
     if (CAPTCHA_CONFIG.warmUpBeforeExecution) {
-      console.log('\n🔥 Aquecendo perfil...');
+      console.log('\n>> Aquecendo perfil antes da execucao...');
       await warmUpProfile(instanceIndex, device);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
-    
-    // SELECIONAR AGENTE
+
     currentAgent = getAgentByInstance(instanceIndex, device);
-    
-    // PERFIL PERSISTENTE
-    const profilePath = getOrCreateProfile(instanceIndex + 1);
-    
-    // COPIAR COOKIES
-    console.log('\n🍪 Sincronizando cookies...');
-    syncCookiesFromRecording(instanceIndex + 1);
+    const deviceProfile = DEVICE_PROFILES[device] || DEVICE_PROFILES.desktop;
 
-    const launchOptions = {
-      headless: false,
-      executablePath: chromePath,
-      userDataDir: profilePath,
-      ignoreDefaultArgs: ['--enable-automation'],
-      defaultViewport: null,
-      args: [
-        ...getStealthArgs(device, position),
-        `--user-agent=${currentAgent.userAgent}`
-      ]
-    };
+    if (useEmbeddedShell) {
+      const partition = getMobilePartition(instanceIndex + 1);
+      const partitionPath = getPartitionPath(partition);
 
-    if (proxy) {
-      launchOptions.args.push(`--proxy-server=${proxy.host}:${proxy.port}`);
-      console.log('🧷 Proxy:', `${proxy.host}:${proxy.port}`);
+      if (freshSession) {
+        clearProfileData(partitionPath);
+      } else {
+        syncPartitionFromRecording(partitionPath);
+      }
+
+      console.log('\n>> Abrindo shell mobile embutido...');
+      shellSession = await createShellSession({
+        device: 'mobile',
+        initialUrl: 'about:blank',
+        partition,
+        proxy
+      });
+      browser = shellSession.browser;
+      page = shellSession.page;
+    } else {
+      const chromePath = findChrome();
+      const profilePath = getOrCreateProfile(instanceIndex + 1);
+
+      if (freshSession) {
+        clearProfileData(profilePath);
+      } else {
+        console.log('\n>> Sincronizando cookies...');
+        syncCookiesFromRecording(instanceIndex + 1);
+      }
+
+      const launchOptions = {
+        headless: false,
+        executablePath: chromePath,
+        userDataDir: profilePath,
+        ignoreDefaultArgs: ['--enable-automation'],
+        defaultViewport: null,
+        args: [
+          ...getStealthArgs(device, position),
+          `--user-agent=${deviceProfile.userAgent || currentAgent.userAgent}`,
+          `--window-size=${deviceProfile.windowSize}`
+        ]
+      };
+
+      if (device === 'mobile') {
+        launchOptions.args.push('--app=data:text/html,<title>Fastbot</title>');
+        launchOptions.args.push('--force-device-scale-factor=1');
+        launchOptions.args.push('--hide-crash-restore-bubble');
+        launchOptions.args.push('--disable-infobars');
+        launchOptions.args.push('--bwsi');
+      }
+
+      if (proxy) {
+        launchOptions.args.push(`--proxy-server=${proxy.host}:${proxy.port}`);
+        console.log('>> Proxy aplicado:', `${proxy.host}:${proxy.port}`);
+      }
+
+      console.log('\n>> Abrindo Chrome...');
+      browser = await puppeteer.launch(launchOptions);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const pages = await browser.pages();
+      page = pages[0] || await browser.newPage();
     }
 
-    console.log('\n🚀 Abrindo Chrome...');
-    browser = await puppeteer.launch(launchOptions);
-    
-    // Delay inicial mais longo
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    const pages = await browser.pages();
-    const page = pages[0] || await browser.newPage();
-
-    // INJETAR FINGERPRINT
     await page.evaluateOnNewDocument(getAgentFingerprintScript(currentAgent));
 
     if (proxy?.username) {
@@ -298,99 +376,113 @@ async function executeMacro(config) {
       });
     }
 
+    if (deviceProfile.userAgent) {
+      await page.setUserAgent(deviceProfile.userAgent);
+    }
+
+    const viewport = device === 'mobile'
+      ? deviceProfile.viewport
+      : {
+          width: currentAgent.screenResolution.width,
+          height: currentAgent.screenResolution.height,
+          deviceScaleFactor: 1,
+          isMobile: false,
+          hasTouch: false
+        };
+
     await page.setViewport({
-      width: currentAgent.screenResolution.width,
-      height: currentAgent.screenResolution.height,
-      deviceScaleFactor: 1,
-      hasTouch: device === 'mobile',
-      isMobile: device === 'mobile'
+      width: viewport.width,
+      height: viewport.height,
+      deviceScaleFactor: viewport.deviceScaleFactor,
+      hasTouch: viewport.hasTouch,
+      isMobile: viewport.isMobile
     });
 
     await page.setExtraHTTPHeaders({
       'Accept-Language': currentAgent.languages.join(','),
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      ...(deviceProfile.headers || {})
     });
 
-    // Injetar variáveis
     await page.evaluateOnNewDocument((vars) => {
       window.__macro_vars = vars;
-    }, { password, pixKey, email });
+    }, { password, pixKey, email, username, phoneNumber });
 
-    console.log('✅ Browser pronto!');
     console.log('\n========================================');
-    console.log('🎬 INICIANDO EXECUÇÃO');
+    console.log('>> INICIANDO EXECUCAO');
     console.log('========================================\n');
 
-    // EXECUTAR AÇÕES
     for (let i = 0; i < actions.length; i++) {
       const action = actions[i];
-      
-      console.log(`🔍 AÇÃO ${i + 1}/${actions.length}: ${action.type.toUpperCase()}`);
-      
+      console.log(`>> ACAO ${i + 1}/${actions.length}: ${action.type.toUpperCase()}`);
+
       try {
         await executeAction(page, action, currentAgent);
-        console.log(`✅ OK`);
-        
-        // VERIFICAR CAPTCHA APÓS CADA AÇÃO
+        console.log('>> OK');
+
         const captchaCheck = await detectCaptcha(page);
-        
         if (captchaCheck.hasCaptcha) {
-          console.log(`\n⚠️  CAPTCHA detectado! (${captchaCheck.type})`);
-          
+          console.log(`>> CAPTCHA detectado (${captchaCheck.type})`);
           let solved = false;
-          
-          // Tentar CapSolver primeiro
+
           if (CAPTCHA_CONFIG.useCapSolver) {
             solved = await solveWithCapSolver(page);
           }
-          
-          // Fallback para manual
           if (!solved && CAPTCHA_CONFIG.manualCaptchaSolve) {
             solved = await waitForManualCaptchaSolve(page);
           }
-          
           if (!solved) {
-            console.log('❌ CAPTCHA não resolvido - abortando');
-            throw new Error('CAPTCHA não resolvido');
+            throw new Error('CAPTCHA nao resolvido');
           }
         }
-        
       } catch (error) {
-        console.error(`❌ ERRO: ${error.message}`);
+        console.error('>> ERRO na acao:', error.message);
       }
-      
-      // DELAYS HUMANIZADOS
+
       if (i < actions.length - 1) {
         let min = delayMin || 500;
         let max = delayMax || 2000;
-        
+
         if (CAPTCHA_CONFIG.humanDelays) {
           min = Math.floor(min * CAPTCHA_CONFIG.delayMultiplier);
           max = Math.floor(max * CAPTCHA_CONFIG.delayMultiplier);
         }
-        
+
         const delay = Math.floor(Math.random() * (max - min + 1)) + min;
-        console.log(`⏱️  ${delay}ms\n`);
+        console.log(`>> Delay de ${delay}ms\n`);
         await page.waitForTimeout(delay);
       }
     }
 
     console.log('\n========================================');
-        console.log(`✅ INSTÂNCIA ${instanceIndex + 1} CONCLUÍDA!`);
+    console.log(`>> INSTANCIA ${instanceIndex + 1} CONCLUIDA`);
     console.log('========================================\n');
-    
+
     await page.waitForTimeout(3000);
-    await browser.close();
+    if (shellSession) {
+      await shellSession.dispose();
+    } else if (browser) {
+      await browser.close();
+    }
 
     return { success: true };
-
   } catch (error) {
-    console.error('\n❌ ERRO CRÍTICO:', error.message);
-    
-    if (browser) {
-      try { await browser.close(); } catch (e) {}
+    console.error('\n>> ERRO CRITICO:', error.message);
+
+    if (shellSession) {
+      try {
+        await shellSession.dispose();
+      } catch (err) {
+        // ignore cleanup errors
+      }
+    } else if (browser) {
+      try {
+        await browser.close();
+      } catch (err) {
+        // ignore cleanup errors
+      }
     }
-    
+
     return { success: false, error: error.message };
   }
 }
@@ -420,16 +512,20 @@ async function executeType(page, action) {
   console.log(`   TYPE: "${(value || '').substring(0, 30)}..." (click=${click}, clear=${clear})`);
   
   try {
-    // Substituir variaveis
+    const macroVars = await getMacroVars(page);
     let processedValue = value || '';
-    processedValue = processedValue.replace(/\{\{email\}\}/g, await page.evaluate(() => window.__macro_vars?.email || ''));
-    processedValue = processedValue.replace(/\{\{password\}\}/g, await page.evaluate(() => window.__macro_vars?.password || ''));
-    processedValue = processedValue.replace(/\{\{pix\}\}/g, await page.evaluate(() => window.__macro_vars?.pixKey || ''));
+    processedValue = processedValue.replace(/\{\{email\}\}/g, macroVars.email || '');
+    processedValue = processedValue.replace(/\{\{password\}\}/g, macroVars.password || '');
+    processedValue = processedValue.replace(/\{\{pix\}\}/g, macroVars.pixKey || '');
+    processedValue = processedValue.replace(/\{\{username\}\}/g, macroVars.username || '');
+    processedValue = processedValue.replace(/\{\{phone\}\}/g, macroVars.phoneNumber || '');
     
     console.log(`   Variaveis disponiveis: {`);
-    console.log(`     email: '${await page.evaluate(() => window.__macro_vars?.email || '')}',`);
+    console.log(`     email: '${macroVars.email || ''}',`);
+    console.log(`     username: '${macroVars.username || ''}',`);
+    console.log(`     phone: '${macroVars.phoneNumber || ''}',`);
     console.log(`     password: '***',`);
-    console.log(`     pixKey: '${(await page.evaluate(() => window.__macro_vars?.pixKey || '')).substring(0, 11)}...'`);
+    console.log(`     pixKey: '${(macroVars.pixKey || '').substring(0, 11)}...'`);
     console.log(`   }`);
     
     // 1. CLICAR (se click=true)
@@ -489,10 +585,13 @@ async function handleClick(page, action) {
 }
 
 async function handleInput(page, action) {
+  const macroVars = await getMacroVars(page);
   let value = action.value || '';
-  value = value.replace(/\{\{email\}\}/g, await page.evaluate(() => window.__macro_vars?.email || ''));
-  value = value.replace(/\{\{password\}\}/g, await page.evaluate(() => window.__macro_vars?.password || ''));
-  value = value.replace(/\{\{pix\}\}/g, await page.evaluate(() => window.__macro_vars?.pixKey || ''));
+  value = value.replace(/\{\{email\}\}/g, macroVars.email || '');
+  value = value.replace(/\{\{password\}\}/g, macroVars.password || '');
+  value = value.replace(/\{\{pix\}\}/g, macroVars.pixKey || '');
+  value = value.replace(/\{\{username\}\}/g, macroVars.username || '');
+  value = value.replace(/\{\{phone\}\}/g, macroVars.phoneNumber || '');
   
   await page.waitForSelector(action.selector, { timeout: 5000, visible: true });
   await page.focus(action.selector);
@@ -562,6 +661,10 @@ async function handleCondition(page, action, agent) {
     await executeAction(page, subAction, agent);
     await page.waitForTimeout(300);
   }
+}
+
+async function getMacroVars(page) {
+  return page.evaluate(() => window.__macro_vars || {});
 }
 
 module.exports = { executeMacro };

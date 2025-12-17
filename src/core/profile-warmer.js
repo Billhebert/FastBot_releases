@@ -217,8 +217,7 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
       },
       args: [
         ...getStealthArgs(device, null),
-        `--user-agent=${currentAgent.userAgent}`,
-        '--disable-blink-features=AutomationControlled'
+        `--user-agent=${currentAgent.userAgent}`
       ]
     };
     

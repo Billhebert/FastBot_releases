@@ -7,6 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 1) DROPAR TABELAS (ordem inversa das dependencias) -------
+DROP TABLE IF EXISTS user_sessions CASCADE;
 DROP TABLE IF EXISTS registrations CASCADE;
 DROP TABLE IF EXISTS macro_executions CASCADE;
 DROP TABLE IF EXISTS pix_keys CASCADE;
@@ -98,6 +99,14 @@ CREATE TABLE registrations (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE user_sessions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_token TEXT NOT NULL UNIQUE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  revoked_at    TIMESTAMPTZ
+);
+
 -- 3) INDICES UTEIS ----------------------------------------
 CREATE INDEX idx_proxies_user          ON proxies(user_id);
 CREATE INDEX idx_passwords_user        ON passwords(user_id);
@@ -106,6 +115,8 @@ CREATE INDEX idx_macro_exec_user       ON macro_executions(user_id);
 CREATE INDEX idx_macro_exec_macro      ON macro_executions(macro_id);
 CREATE INDEX idx_registrations_user    ON registrations(user_id);
 CREATE INDEX idx_registrations_created ON registrations(created_at DESC);
+CREATE INDEX idx_sessions_user         ON user_sessions(user_id);
+CREATE INDEX idx_sessions_active       ON user_sessions(session_token) WHERE revoked_at IS NULL;
 
 -- 4) USUARIO DEV OPCIONAL ---------------------------------
 INSERT INTO users (email, password_hash, role, access_expires_at)

@@ -1,6 +1,9 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
+const { registerMobileShellHandlers, REMOTE_DEBUGGING_PORT } = require('./mobile-shell');
+
+app.commandLine.appendSwitch('remote-debugging-port', String(REMOTE_DEBUGGING_PORT));
 
 let mainWindow;
 
@@ -31,6 +34,7 @@ function createWindow() {
 app.whenReady().then(() => {
   app.setAppUserModelId('com.fastbot.app');
   Menu.setApplicationMenu(null);
+  registerMobileShellHandlers();
   createWindow();
 
   app.on('activate', () => {
@@ -59,16 +63,24 @@ autoUpdater.on('update-downloaded', () => {
 // IPC HANDLERS
 // ============================================
 
-ipcMain.handle('start-recording', async (event, device = 'desktop') => {
+ipcMain.handle('start-recording', async (event, options = {}) => {
   console.log('========================================');
   console.log('🎬 main.js: START RECORDING');
+  const payload = typeof options === 'string' ? { device: options } : (options || {});
+  const device = payload.device || 'desktop';
+  const freshSession = !!payload.freshSession;
+  const startUrl = typeof payload.startUrl === 'string' ? payload.startUrl : null;
   console.log('📱 Device:', device);
+  console.log('🧹 Sessão limpa:', freshSession);
+  if (startUrl) {
+    console.log('🌐 Start URL:', startUrl);
+  }
   console.log('========================================');
   
   try {
     // recorder.js está na mesma pasta que main.js
     const { startRecording } = require('../core/recorder.js');
-    const result = await startRecording(device);
+    const result = await startRecording(device, { freshSession, startUrl });
     console.log('✅ Resultado:', result);
     return result;
   } catch (error) {
