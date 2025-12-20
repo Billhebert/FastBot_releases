@@ -27,7 +27,7 @@ function findChrome() {
     }
   }
 
-  throw new Error('Chrome não encontrado');
+  throw new Error('Chrome nao encontrado');
 }
 
 module.exports = { findChrome };

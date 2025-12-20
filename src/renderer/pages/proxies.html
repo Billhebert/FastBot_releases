@@ -39,7 +39,7 @@
       async function init() {
         currentUser = await requirePagePermission("proxies");
         if (!currentUser) return;
-        document.getElementById("menu-container").innerHTML = createMenu();
+        document.getElementById("menu-container").innerHTML = createMenu(currentUser);
         await loadProxies();
       }
 
@@ -102,7 +102,7 @@
           .filter((l) => l);
 
         if (lines.length === 0) {
-          showNotification("Nenhum proxy válido encontrado", "warning");
+          showNotification("Nenhum proxy valido encontrado", "warning");
           return;
         }
 
@@ -111,7 +111,7 @@
             const parts = line.split(":");
 
             if (parts.length < 2) {
-              throw new Error(`Formato inválido: ${line}`);
+              throw new Error(`Formato invalido: ${line}`);
             }
 
             return {
@@ -154,11 +154,11 @@
             .eq("user_id", currentUser.id)
             .single();
 
-          // Aqui você pode implementar um teste real do proxy
+          // Aqui voce pode implementar um teste real do proxy
           // Por enquanto, apenas simulamos
           setTimeout(() => {
             showNotification(
-              `Proxy ${data.host}:${data.port} está funcionando!`,
+              `Proxy ${data.host}:${data.port} esta funcionando!`,
               "success"
             );
           }, 1000);
@@ -168,7 +168,7 @@
       }
 
       async function deleteProxy(id) {
-        const confirmed = await confirm("Confirma exclusão deste proxy?");
+        const confirmed = await confirm("Confirma exclusao deste proxy?");
         if (!confirmed) return;
 
         try {
@@ -180,7 +180,7 @@
 
           if (error) throw error;
 
-          showNotification("Proxy excluído", "success");
+          showNotification("Proxy excluido", "success");
           await loadProxies();
         } catch (error) {
           showNotification("Erro ao excluir: " + error.message, "error");

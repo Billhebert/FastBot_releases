@@ -52,7 +52,7 @@ async function waitForTargetPage(browser, targetId, timeout = SHELL_CONNECT_TIME
     await wait(200);
   }
 
-  throw new Error('Não foi possível vincular o BrowserView ao Puppeteer');
+  throw new Error('Nao foi possivel vincular o BrowserView ao Puppeteer');
 }
 
 async function createShellSession(options = {}) {
@@ -67,7 +67,7 @@ async function createShellSession(options = {}) {
   const shell = getShell(shellId);
 
   if (!shell) {
-    throw new Error('Não foi possível criar shell mobile');
+    throw new Error('Nao foi possivel criar shell mobile');
   }
 
   if (proxy) {
@@ -94,7 +94,7 @@ async function createShellSession(options = {}) {
   }
   if (!targetId) {
     closeShell(shellId);
-    throw new Error('Não foi possível identificar o alvo DevTools do shell');
+    throw new Error('Nao foi possivel identificar o alvo DevTools do shell');
   }
 
   const browser = await puppeteer.connect({

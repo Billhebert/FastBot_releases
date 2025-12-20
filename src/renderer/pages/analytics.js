@@ -50,7 +50,7 @@ async function getUserStats(userId) {
       totalMacros: macros.count
     };
   } catch (error) {
-    console.error('Erro ao buscar estatísticas do usuário:', error);
+    console.error('Erro ao buscar estatisticas do usuario:', error);
     return { totalExecutions: 0, totalMacros: 0 };
   }
 }

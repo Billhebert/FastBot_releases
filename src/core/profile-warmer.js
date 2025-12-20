@@ -7,8 +7,8 @@ const { getAgentByInstance, getAgentFingerprintScript } = require('./agents.js')
 puppeteer.use(StealthPlugin());
 
 /**
- * 🔥 AQUECIMENTO DE PERFIL - 3 INTENSIDADES
- * VERSÃO ULTRA DEFENSIVA - NÃO PODE DAR ERRO
+ *  AQUECIMENTO DE PERFIL - 3 INTENSIDADES
+ * VERSO ULTRA DEFENSIVA - NO PODE DAR ERRO
  */
 
 const WARMUP_PROFILES = {
@@ -56,15 +56,15 @@ const WARMUP_PROFILES = {
   }
 };
 
-// VERSÃO ULTRA DEFENSIVA - NÃO USA page.evaluate
+// VERSO ULTRA DEFENSIVA - NO USA page.evaluate
 async function simulateHumanMouse(page, movements = 5) {
   try {
     if (!page) {
-      console.log('⚠️ Page inválida, pulando mouse');
+      console.log(' Page invlida, pulando mouse');
       return;
     }
     
-    // USAR DIMENSÕES FIXAS - NÃO DEPENDE DE page.evaluate
+    // USAR DIMENSES FIXAS - NO DEPENDE DE page.evaluate
     const width = 1920;
     const height = 1080;
     
@@ -73,29 +73,29 @@ async function simulateHumanMouse(page, movements = 5) {
         const x = Math.floor(Math.random() * width);
         const y = Math.floor(Math.random() * height);
         
-        // Verificar se x e y são números válidos
+        // Verificar se x e y so nmeros vlidos
         if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
-          console.log('⚠️ Coordenadas inválidas, pulando');
+          console.log(' Coordenadas invlidas, pulando');
           continue;
         }
         
         await page.mouse.move(x, y, { steps: 10 });
         await page.waitForTimeout(Math.random() * 500 + 200);
       } catch (err) {
-        console.log('⚠️ Erro individual no movimento:', err.message);
-        // Continuar com próximo movimento
+        console.log(' Erro individual no movimento:', err.message);
+        // Continuar com prximo movimento
       }
     }
   } catch (error) {
-    console.log('⚠️ Erro geral ao mover mouse:', error.message);
-    // Não é crítico - continuar
+    console.log(' Erro geral ao mover mouse:', error.message);
+    // No  crtico - continuar
   }
 }
 
 async function simulateHumanScroll(page, scrollCount = 3) {
   try {
     if (!page) {
-      console.log('⚠️ Page inválida, pulando scroll');
+      console.log(' Page invlida, pulando scroll');
       return;
     }
     
@@ -112,18 +112,18 @@ async function simulateHumanScroll(page, scrollCount = 3) {
         
         await page.waitForTimeout(Math.random() * 1500 + 800);
       } catch (err) {
-        console.log('⚠️ Erro individual no scroll:', err.message);
-        // Continuar com próximo scroll
+        console.log(' Erro individual no scroll:', err.message);
+        // Continuar com prximo scroll
       }
     }
   } catch (error) {
-    console.log('⚠️ Erro geral ao rolar:', error.message);
-    // Não é crítico - continuar
+    console.log(' Erro geral ao rolar:', error.message);
+    // No  crtico - continuar
   }
 }
 
 async function visitSiteIntense(page, url, config) {
-  console.log(`   🌐 Visitando: ${url}`);
+  console.log(`    Visitando: ${url}`);
   
   try {
     await page.goto(url, {
@@ -131,7 +131,7 @@ async function visitSiteIntense(page, url, config) {
       timeout: 30000
     });
     
-    // Aguardar página carregar
+    // Aguardar pgina carregar
     await page.waitForTimeout(2000);
     
     // Simular comportamento humano
@@ -145,25 +145,25 @@ async function visitSiteIntense(page, url, config) {
     
     await page.waitForTimeout(timeOnSite);
     
-    console.log(`   ✅ OK`);
+    console.log(`    OK`);
     return true;
     
   } catch (error) {
-    console.log(`   ⚠️ Erro: ${error.message}`);
+    console.log(`    Erro: ${error.message}`);
     return false;
   }
 }
 
 async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 'medium') {
   console.log('========================================');
-  console.log('🔥 AQUECIMENTO DE PERFIL [VERSÃO DEFENSIVA]');
-  console.log(`📱 Dispositivo: ${device}`);
-  console.log(`🎯 Intensidade: ${intensity}`);
-  console.log(`👤 Perfil: ${instanceIndex}`);
+  console.log(' AQUECIMENTO DE PERFIL [VERSO DEFENSIVA]');
+  console.log(` Dispositivo: ${device}`);
+  console.log(` Intensidade: ${intensity}`);
+  console.log(` Perfil: ${instanceIndex}`);
   console.log('========================================\n');
   
   const config = WARMUP_PROFILES[intensity] || WARMUP_PROFILES.medium;
-  console.log(`🌐 Sites: ${config.sites.length}\n`);
+  console.log(` Sites: ${config.sites.length}\n`);
   
   let browser = null;
   let sitesVisited = 0;
@@ -172,12 +172,12 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
   try {
     const chromePath = findChrome();
     
-    // VERIFICAÇÃO DEFENSIVA do agent
+    // VERIFICAO DEFENSIVA do agent
     let currentAgent;
     try {
       currentAgent = getAgentByInstance(instanceIndex, device);
     } catch (err) {
-      console.log('⚠️ Erro ao buscar agent, usando padrão');
+      console.log(' Erro ao buscar agent, usando padro');
       currentAgent = {
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         screenResolution: { width: 1920, height: 1080 },
@@ -187,20 +187,20 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
     
     // GARANTIR que screenResolution existe
     if (!currentAgent.screenResolution || typeof currentAgent.screenResolution !== 'object') {
-      console.log('⚠️ screenResolution inválido, usando padrão');
+      console.log(' screenResolution invlido, usando padro');
       currentAgent.screenResolution = { width: 1920, height: 1080 };
     }
     
     // GARANTIR que width e height existem
     if (!currentAgent.screenResolution.width || !currentAgent.screenResolution.height) {
-      console.log('⚠️ width/height inválidos, usando padrão');
+      console.log(' width/height invlidos, usando padro');
       currentAgent.screenResolution.width = 1920;
       currentAgent.screenResolution.height = 1080;
     }
     
     // GARANTIR que languages existe
     if (!currentAgent.languages || !Array.isArray(currentAgent.languages)) {
-      console.log('⚠️ languages inválido, usando padrão');
+      console.log(' languages invlido, usando padro');
       currentAgent.languages = ['pt-BR', 'pt'];
     }
     
@@ -221,20 +221,20 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
       ]
     };
     
-    console.log('🚀 Abrindo navegador...\n');
+    console.log(' Abrindo navegador...\n');
     browser = await puppeteer.launch(launchOptions);
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     const pages = await browser.pages();
     const page = pages[0] || await browser.newPage();
     
-    // Aplicar fingerprint apenas se a função existir
+    // Aplicar fingerprint apenas se a funo existir
     try {
       if (typeof getAgentFingerprintScript === 'function') {
         await page.evaluateOnNewDocument(getAgentFingerprintScript(currentAgent));
       }
     } catch (err) {
-      console.log('⚠️ Erro ao aplicar fingerprint:', err.message);
+      console.log(' Erro ao aplicar fingerprint:', err.message);
     }
     
     // Aplicar headers
@@ -244,13 +244,13 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       });
     } catch (err) {
-      console.log('⚠️ Erro ao definir headers:', err.message);
+      console.log(' Erro ao definir headers:', err.message);
     }
     
     // Visitar sites
     for (let i = 0; i < config.sites.length; i++) {
       const site = config.sites[i];
-      console.log(`📍 Site ${i + 1}/${config.sites.length}`);
+      console.log(` Site ${i + 1}/${config.sites.length}`);
       
       const visited = await visitSiteIntense(page, site, config);
       if (visited) sitesVisited++;
@@ -262,9 +262,9 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
     
     const totalTime = Math.ceil((Date.now() - startTime) / 1000);
     
-    console.log('\n✅ PERFIL AQUECIDO!');
-    console.log(`📊 Sites: ${sitesVisited}/${config.sites.length}`);
-    console.log(`⏱️  Tempo: ${totalTime}s\n`);
+    console.log('\n PERFIL AQUECIDO!');
+    console.log(` Sites: ${sitesVisited}/${config.sites.length}`);
+    console.log(`  Tempo: ${totalTime}s\n`);
     
     await browser.close();
     
@@ -276,7 +276,7 @@ async function warmUpProfile(instanceIndex = 0, device = 'desktop', intensity = 
     };
     
   } catch (error) {
-    console.error('❌ Erro:', error.message);
+    console.error(' Erro:', error.message);
     console.error('Stack:', error.stack);
     
     if (browser) {

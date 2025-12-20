@@ -2,13 +2,13 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 
-// Diretório de perfis separados mas PERSISTENTES
+// Diretrio de perfis separados mas PERSISTENTES
 const PROFILES_DIR = path.join(os.homedir(), '.chrome-macro-profiles');
 
-// Garantir que diretório existe
+// Garantir que diretrio existe
 if (!fs.existsSync(PROFILES_DIR)) {
   fs.mkdirSync(PROFILES_DIR, { recursive: true });
-  console.log('📁 Diretório de perfis criado:', PROFILES_DIR);
+  console.log(' Diretrio de perfis criado:', PROFILES_DIR);
 }
 
 function getOrCreateProfile(instanceIndex) {
@@ -16,19 +16,19 @@ function getOrCreateProfile(instanceIndex) {
   
   if (!fs.existsSync(profilePath)) {
     fs.mkdirSync(profilePath, { recursive: true });
-    console.log(`📁 Criando novo perfil persistente: profile-${instanceIndex}`);
+    console.log(` Criando novo perfil persistente: profile-${instanceIndex}`);
   } else {
-    console.log(`📁 Usando perfil persistente existente: profile-${instanceIndex}`);
+    console.log(` Usando perfil persistente existente: profile-${instanceIndex}`);
   }
   
   return profilePath;
 }
 
 function getStealthArgs(device, position) {
-  // CORREÇÃO: Verificar se position é null ou undefined
+  // CORREO: Verificar se position  null ou undefined
   const baseArgs = [];
   
-  // Só adicionar window-position e window-size se position existir
+  // S adicionar window-position e window-size se position existir
   if (position && typeof position === 'object' && position.x !== undefined) {
     baseArgs.push(`--window-position=${position.x},${position.y}`);
     baseArgs.push(`--window-size=${position.width},${position.height}`);
@@ -47,7 +47,9 @@ function getStealthArgs(device, position) {
     '--disable-prompt-on-repost',
     '--no-default-browser-check',
     '--disable-sync',
-    '--metrics-recording-only'
+    '--metrics-recording-only',
+    '--disable-infobars',
+    '--test-type'
   );
 
   return baseArgs;
@@ -56,7 +58,7 @@ function getStealthArgs(device, position) {
 function getStealthScript() {
   return `
     // ============================================
-    // STEALTH ANTI-DETECÇÃO
+    // STEALTH ANTI-DETECO
     // ============================================
     
     // Remover webdriver

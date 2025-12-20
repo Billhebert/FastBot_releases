@@ -16,17 +16,17 @@ function createWindow() {
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      // Arquivos estão na raiz do projeto, precisa subir 2 pastas
+      nodeIntegration: true,
+      contextIsolation: false,
+      // Arquivos estao na raiz do projeto, precisa subir 2 pastas
       preload: path.join(__dirname, '../renderer/pages/preload.js')
     },
-    icon: path.join(__dirname, '../../icons/logo.ico') // Ícone da aplicação
+    icon: path.join(__dirname, '../../icons/logo.ico') // Icone da aplicacao
   });
 
   mainWindow.setMenu(null);
 
-  // Arquivo auth.html está na raiz do projeto
+  // Arquivo auth.html esta na raiz do projeto
   mainWindow.loadFile(path.join(__dirname, '../renderer/pages/auth.html'));
   autoUpdater.checkForUpdatesAndNotify();
 }
@@ -65,75 +65,75 @@ autoUpdater.on('update-downloaded', () => {
 
 ipcMain.handle('start-recording', async (event, options = {}) => {
   console.log('========================================');
-  console.log('🎬 main.js: START RECORDING');
+  console.log(' main.js: START RECORDING');
   const payload = typeof options === 'string' ? { device: options } : (options || {});
   const device = payload.device || 'desktop';
   const freshSession = !!payload.freshSession;
   const startUrl = typeof payload.startUrl === 'string' ? payload.startUrl : null;
-  console.log('📱 Device:', device);
-  console.log('🧹 Sessão limpa:', freshSession);
+  console.log(' Device:', device);
+  console.log(' Sessao limpa:', freshSession);
   if (startUrl) {
-    console.log('🌐 Start URL:', startUrl);
+    console.log(' Start URL:', startUrl);
   }
   console.log('========================================');
   
   try {
-    // recorder.js está na mesma pasta que main.js
+    // recorder.js esta na mesma pasta que main.js
     const { startRecording } = require('../core/recorder.js');
     const result = await startRecording(device, { freshSession, startUrl });
-    console.log('✅ Resultado:', result);
+    console.log(' Resultado:', result);
     return result;
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.error(' Erro:', error);
     return { success: false, message: error.message };
   }
 });
 
 ipcMain.handle('stop-recording', async () => {
   console.log('========================================');
-  console.log('⏹️ main.js: STOP RECORDING');
+  console.log(' main.js: STOP RECORDING');
   console.log('========================================');
   
   try {
-    // recorder.js está na mesma pasta que main.js
+    // recorder.js esta na mesma pasta que main.js
     const { stopRecording } = require('../core/recorder.js');
     const actions = await stopRecording();
-    console.log('✅ Ações retornadas:', actions.length);
-    console.log('📋 Ações:', JSON.stringify(actions, null, 2));
+    console.log(' Acoes retornadas:', actions.length);
+    console.log(' Acoes:', JSON.stringify(actions, null, 2));
     return actions;
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.error(' Erro:', error);
     return [];
   }
 });
 
 ipcMain.handle('execute-macro', async (event, config) => {
-  console.log('▶️ main.js: EXECUTE MACRO');
-  console.log('📋 Config:', config);
+  console.log(' main.js: EXECUTE MACRO');
+  console.log(' Config:', config);
   
   try {
-    // player.js está na mesma pasta que main.js
+    // player.js esta na mesma pasta que main.js
     const { executeMacro } = require('../core/player.js');
     return await executeMacro(config);
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.error(' Erro:', error);
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('warmup-profile', async (event, config) => {
-  console.log('🔥 main.js: WARMUP PROFILE');
-  console.log('📋 Config:', config);
+  console.log(' main.js: WARMUP PROFILE');
+  console.log(' Config:', config);
   
   const { instanceIndex, device, intensity } = config;
   
   try {
-    // profile-warmer.js está na mesma pasta que main.js
+    // profile-warmer.js esta na mesma pasta que main.js
     const { warmUpProfile } = require('../core/profile-warmer.js');
     const result = await warmUpProfile(instanceIndex, device, intensity);
     return result;
   } catch (error) {
-    console.error('❌ Erro warmup:', error);
+    console.error(' Erro warmup:', error);
     return {
       success: false,
       error: error.message

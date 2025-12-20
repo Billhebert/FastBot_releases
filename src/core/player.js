@@ -39,15 +39,114 @@ const DEVICE_PROFILES = {
   }
 };
 
+const ENABLE_MOBILE_SHELL = false;
+
+const AUTO_AD_GUARD = {
+  selectors: [
+    '[data-testid*=\"ad\"]',
+    '[data-testid*=\"banner\"]',
+    '[id*=\"ad\"]',
+    '[class*=\"ad\"]',
+    '[class*=\"ads\"]',
+    '[class*=\"promo\"]',
+    '.adsbygoogle',
+    '.interstitial',
+    '.popup',
+    '.modal',
+    '[role=\"dialog\"]',
+    '[aria-label*=\"anuncio\"]',
+    '[aria-label*=\"publicidade\"]',
+    '#global-live-stream-poster',
+    '[id*=\"global-live-stream\"]',
+    '[class*=\"live-stream-poster\"]',
+    '[class*=\"live-stream\"]',
+    '[data-component*=\"ad\"]',
+    '[class*=\"_close-btn\"]',
+    'i[class*=\"close-btn\"]'
+  ],
+  keywords: [
+    'anuncio',
+    'anúncio',
+    'publicidade',
+    'ads',
+    'advertisement',
+    'sponsored',
+    'sponsor',
+    'oferta',
+    'bonus',
+    'promo',
+    'voce ganhou',
+    'recompensa',
+    'mercado',
+    'live stream',
+    'global-live',
+    'popup',
+    'overlay'
+  ],
+  closeSelectors: [
+    'button[aria-label*=\"fechar\"]',
+    'button[aria-label*=\"close\"]',
+    '[role=\"button\"][aria-label*=\"fechar\"]',
+    '.close-button',
+    '.close-btn',
+    '[class*=\"close\"]',
+    '.modal-close',
+    '.dialog-close',
+    'button.close',
+    '[data-icon=\"close\"]',
+    '[data-testid*=\"close\"]'
+  ],
+  directCloseSelectors: [
+    '[class*=\"_close-btn\"]',
+    '[class*=\"close-btn\"]',
+    'i[class*=\"close\"]',
+    'svg[class*=\"close\"]',
+    '[data-close=\"true\"]'
+  ],
+  closeKeywords: [
+    'fechar',
+    'close',
+    'pular',
+    'skip',
+    'sair',
+    'x',
+    'remover'
+  ]
+};
+
+const FALLBACK_POPUP_SELECTORS = [
+  '.modal',
+  '.dialog',
+  '.popup',
+  '.overlay',
+  '[class*="close"]',
+  '[id*="close"]',
+  '[data-testid*="close"]',
+  '[aria-label*="fechar"]',
+  '[aria-label*="close"]'
+];
+
+const sanitizeSelectorValue = (value) => {
+  if (typeof value !== 'string') return '';
+  let trimmed = value.trim();
+  while (trimmed.length > 1 && (trimmed.startsWith('"') || trimmed.startsWith("'"))) {
+    trimmed = trimmed.slice(1);
+  }
+  while (trimmed.length > 1 && (trimmed.endsWith('"') || trimmed.endsWith("'"))) {
+    trimmed = trimmed.slice(0, -1);
+  }
+  return trimmed;
+};
+
 // ============================================
-// CONFIGURAÇÕES ANTI-CAPTCHA
+// CONFIGURAES ANTI-CAPTCHA
 // ============================================
 
 const CAPTCHA_CONFIG = {
   // Aquecer perfil antes de executar?
   warmUpBeforeExecution: false, // Mude para true para ativar
   
-  // Usar CapSolver? (serviço com trial grátis $5)
+  // Usar CapSolver? (servio com trial grtis $5)
   // Cadastre em: https://www.capsolver.com/
   useCapSolver: false,
   capSolverApiKey: null, // Coloque sua API key aqui
@@ -57,12 +156,12 @@ const CAPTCHA_CONFIG = {
   delayMultiplier: 1.5, // 1.5x mais lento
   
   // Resolver CAPTCHA manualmente?
-  manualCaptchaSolve: true, // Pausa e aguarda você resolver
+  manualCaptchaSolve: true, // Pausa e aguarda voc resolver
   manualTimeout: 300000 // 5 minutos para resolver manualmente
 };
 
 // ============================================
-// DETECÇÃO DE CAPTCHA
+// DETECO DE CAPTCHA
 // ============================================
 
 async function detectCaptcha(page) {
@@ -105,10 +204,10 @@ async function detectCaptcha(page) {
 // ============================================
 
 async function waitForManualCaptchaSolve(page) {
-  console.log('\n⚠️  CAPTCHA DETECTADO!');
-  console.log('🧩 Resolva o CAPTCHA na janela do Chrome');
-  console.log('⏳ Aguardando até 5 minutos...');
-  console.log('✅ O sistema detecta automaticamente quando for resolvido');
+  console.log('\n  CAPTCHA DETECTADO!');
+  console.log(' Resolva o CAPTCHA na janela do Chrome');
+  console.log(' Aguardando at 5 minutos...');
+  console.log(' O sistema detecta automaticamente quando for resolvido');
   console.log('');
   const startTime = Date.now();
   const timeout = CAPTCHA_CONFIG.manualTimeout;
@@ -123,7 +222,7 @@ async function waitForManualCaptchaSolve(page) {
     
     if (!check.hasCaptcha) {
       console.log('');
-      console.log('✅ CAPTCHA RESOLVIDO! Continuando...');
+      console.log(' CAPTCHA RESOLVIDO! Continuando...');
       console.log('');
       await new Promise(resolve => setTimeout(resolve, 3000));
       return true;
@@ -133,12 +232,12 @@ async function waitForManualCaptchaSolve(page) {
     if (attempts % 5 === 0) {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const remaining = Math.floor((timeout - (Date.now() - startTime)) / 1000);
-      console.log(`⏳ ${elapsed}s decorridos | ${remaining}s restantes...`);
+      console.log(` ${elapsed}s decorridos | ${remaining}s restantes...`);
     }
   }
   
   console.log('');
-  console.log('⏰ TIMEOUT: 5 minutos sem resolver');
+  console.log(' TIMEOUT: 5 minutos sem resolver');
   console.log('');
   
   return false;
@@ -153,7 +252,7 @@ async function solveWithCapSolver(page) {
     return false;
   }
   
-  console.log('\n🧠 Tentando resolver com CapSolver...');
+  console.log('\n Tentando resolver com CapSolver...');
   
   try {
     const axios = require('axios');
@@ -165,7 +264,7 @@ async function solveWithCapSolver(page) {
     });
     
     if (!siteKey) {
-      console.log('⚠️  Não foi possível encontrar sitekey');
+      console.log('  No foi possvel encontrar sitekey');
       return false;
     }
     
@@ -186,15 +285,15 @@ async function solveWithCapSolver(page) {
     });
     
     if (createTask.data.errorId !== 0) {
-      console.log(`❌ Erro: ${createTask.data.errorDescription}`);
+      console.log(` Erro: ${createTask.data.errorDescription}`);
       return false;
     }
     
     const taskId = createTask.data.taskId;
     console.log(`   Task ID: ${taskId}`);
-    console.log('   ⏳ Aguardando solução (15-60s)...');
+    console.log('    Aguardando soluo (15-60s)...');
     
-    // Aguardar solução
+    // Aguardar soluo
     let attempts = 0;
     while (attempts < 60) {
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -208,7 +307,7 @@ async function solveWithCapSolver(page) {
       if (getResult.data.status === 'ready') {
         const token = getResult.data.solution.gRecaptchaResponse;
         
-        console.log('   ✅ Token recebido!');
+        console.log('    Token recebido!');
         
         // Injetar token
         await page.evaluate((token) => {
@@ -216,7 +315,7 @@ async function solveWithCapSolver(page) {
           if (el) el.innerHTML = token;
         }, token);
         
-        console.log('   ✅ Token injetado!');
+        console.log('    Token injetado!');
         console.log('');
         
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -224,7 +323,7 @@ async function solveWithCapSolver(page) {
       }
       
       if (getResult.data.status === 'failed') {
-        console.log(`   ❌ Falhou: ${getResult.data.errorDescription}`);
+        console.log(`    Falhou: ${getResult.data.errorDescription}`);
         return false;
       }
       
@@ -234,21 +333,21 @@ async function solveWithCapSolver(page) {
       }
     }
     
-    console.log('\n   ⏰ Timeout');
+    console.log('\n    Timeout');
     return false;
     
   } catch (error) {
-    console.log(`   ❌ Erro: ${error.message}`);
+    console.log(`    Erro: ${error.message}`);
     return false;
   }
 }
 
 // ============================================
-// EXECUTAR MACRO COM PROTEÇÃO ANTI-CAPTCHA
+// EXECUTAR MACRO COM PROTEO ANTI-CAPTCHA
 // ============================================
 
 
-async function executeMacro(config) {
+async function executeMacro(config = {}) {
   const {
     actions,
     device,
@@ -259,11 +358,14 @@ async function executeMacro(config) {
     email,
     username,
     phoneNumber,
+    link,
     instanceIndex,
     delayMin,
     delayMax,
-    freshSession = false
+    freshSession = false,
+    options = {}
   } = config;
+  const autoCloseAds = options.autoCloseAds !== false;
 
   console.log('\n========================================');
   console.log(`>> EXECUTANDO INSTANCIA ${instanceIndex + 1}`);
@@ -286,7 +388,7 @@ async function executeMacro(config) {
     console.log(`>> Delays: ${CAPTCHA_CONFIG.delayMultiplier}x mais humanos`);
   }
 
-  const useEmbeddedShell = device === 'mobile';
+  const useEmbeddedShell = ENABLE_MOBILE_SHELL && device === 'mobile';
 
   let browser = null;
   let shellSession = null;
@@ -368,6 +470,9 @@ async function executeMacro(config) {
     }
 
     await page.evaluateOnNewDocument(getAgentFingerprintScript(currentAgent));
+    if (autoCloseAds) {
+      await enableAutoCloseAds(page);
+    }
 
     if (proxy?.username) {
       await page.authenticate({
@@ -406,7 +511,7 @@ async function executeMacro(config) {
 
     await page.evaluateOnNewDocument((vars) => {
       window.__macro_vars = vars;
-    }, { password, pixKey, email, username, phoneNumber });
+    }, { password, pixKey, email, username, phoneNumber, link });
 
     console.log('\n========================================');
     console.log('>> INICIANDO EXECUCAO');
@@ -487,20 +592,37 @@ async function executeMacro(config) {
   }
 }
 
-// ... [Resto das funções executeAction, handleClick, etc - copiar do player-agents.js]
+// ... [Resto das funes executeAction, handleClick, etc - copiar do player-agents.js]
 
 async function executeAction(page, action, agent) {
   switch (action.type) {
-    case 'type': return await executeType(page, action);
-    case 'click': return await handleClick(page, action);
-    case 'input': return await handleInput(page, action);
-    case 'navigate': return await handleNavigate(page, action, agent);
-    case 'scroll': return await handleScroll(page, action);
-    case 'keypress': return await handleKeypress(page, action);
-    case 'select': return await handleSelect(page, action);
-    case 'wait': return await handleWait(page, action);
-    case 'loop': return await handleLoop(page, action, agent);
-    case 'condition': return await handleCondition(page, action, agent);
+    case 'type':
+      return await executeType(page, action);
+    case 'click':
+      return await handleClick(page, action);
+    case 'input':
+      return await handleInput(page, action);
+    case 'navigate':
+      return await handleNavigate(page, action, agent);
+    case 'scroll':
+      return await handleScroll(page, action);
+    case 'keypress':
+      return await handleKeypress(page, action);
+    case 'select':
+      return await handleSelect(page, action);
+    case 'wait':
+      return await handleWait(page, action);
+    case 'loop':
+      return await handleLoop(page, action, agent);
+    case 'condition':
+      return await handleCondition(page, action, agent);
+    case 'close_popups':
+      return await handleClosePopups(page, action);
+    default:
+      console.warn(`>> Tipo de acao desconhecido: ${action.type}`);
+      return { success: false, error: `Tipo de acao desconhecido: ${action.type}` };
+  }
+}
 
 // ============================================
 // FUNCAO TYPE - Digitar sem seletor
@@ -519,6 +641,7 @@ async function executeType(page, action) {
     processedValue = processedValue.replace(/\{\{pix\}\}/g, macroVars.pixKey || '');
     processedValue = processedValue.replace(/\{\{username\}\}/g, macroVars.username || '');
     processedValue = processedValue.replace(/\{\{phone\}\}/g, macroVars.phoneNumber || '');
+    processedValue = processedValue.replace(/\{\{link\}\}/g, macroVars.link || '');
     
     console.log(`   Variaveis disponiveis: {`);
     console.log(`     email: '${macroVars.email || ''}',`);
@@ -526,6 +649,7 @@ async function executeType(page, action) {
     console.log(`     phone: '${macroVars.phoneNumber || ''}',`);
     console.log(`     password: '***',`);
     console.log(`     pixKey: '${(macroVars.pixKey || '').substring(0, 11)}...'`);
+    console.log(`     link: '${macroVars.link || ''}'`);
     console.log(`   }`);
     
     // 1. CLICAR (se click=true)
@@ -567,21 +691,575 @@ async function executeType(page, action) {
   }
 }
 
+async function enableAutoCloseAds(page) {
+  await page.evaluateOnNewDocument((guardConfig) => {
+    if (window.__fastbotAutoAds) return;
+    window.__fastbotAutoAds = true;
+
+    const KEYWORDS = (guardConfig.keywords || []).map((word) =>
+      (word || '').toLowerCase().trim()
+    ).filter(Boolean);
+    const CLOSE_TEXT = (guardConfig.closeKeywords || []).map((word) =>
+      (word || '').toLowerCase().trim()
+    ).filter(Boolean);
+    const SELECTORS = (guardConfig.selectors || []).filter(Boolean);
+    const CLOSE_SELECTORS = (guardConfig.closeSelectors || []).filter(Boolean);
+    const DIRECT_SELECTORS = (guardConfig.directCloseSelectors || []).filter(Boolean);
+    const SELECTOR_QUERY = SELECTORS.length ? SELECTORS.join(',') : null;
+    const DIRECT_QUERY = DIRECT_SELECTORS.length ? DIRECT_SELECTORS.join(',') : null;
+
+    const processed = new WeakSet();
+    const log = (...args) => {
+      try {
+        console.debug('[Fastbot][Ads]', ...args);
+      } catch (err) {
+        // ignore logging issues
+      }
+    };
+
+    const normalize = (value) => (value || '').toLowerCase();
+
+    const hasKeyword = (text) => {
+      if (!text) return false;
+      const norm = normalize(text);
+      return KEYWORDS.some((word) => norm.includes(word));
+    };
+
+    const looksLikeAd = (element) => {
+      if (!(element instanceof HTMLElement)) return false;
+      if (element.dataset?.fastbotAds === 'ok') return false;
+      const attrBundle = [
+        element.id,
+        element.className,
+        element.getAttribute('aria-label') || '',
+        element.getAttribute('role') || '',
+        element.getAttribute('data-testid') || '',
+        element.getAttribute('data-name') || '',
+        element.getAttribute('title') || ''
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      if (hasKeyword(attrBundle)) return true;
+
+      const textSample = (element.innerText || '').slice(0, 280);
+      if (hasKeyword(textSample)) return true;
+
+      return false;
+    };
+
+    const parseFloatSafe = (value) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : null;
+    };
+
+    const extractPoints = (d) => {
+      if (!d) return [];
+      const tokens = d.match(/-?\d*\.?\d+/g);
+      if (!tokens || tokens.length < 2) return [];
+      const numbers = tokens.map(parseFloatSafe).filter((n) => Number.isFinite(n));
+      const points = [];
+      for (let i = 0; i < numbers.length - 1; i += 2) {
+        points.push({ x: numbers[i], y: numbers[i + 1] });
+      }
+      return points;
+    };
+
+    const touchesCorners = (svg, points) => {
+      if (!points.length) return false;
+      const viewBox = svg.viewBox?.baseVal;
+      let minX = 0;
+      let minY = 0;
+      let maxX = null;
+      let maxY = null;
+
+      if (viewBox && viewBox.width && viewBox.height) {
+        minX = viewBox.x;
+        minY = viewBox.y;
+        maxX = viewBox.x + viewBox.width;
+        maxY = viewBox.y + viewBox.height;
+      } else {
+        const width = parseFloatSafe(svg.getAttribute('width')) || 0;
+        const height = parseFloatSafe(svg.getAttribute('height')) || width;
+        maxX = width;
+        maxY = height;
+      }
+
+      if (maxX === null || maxY === null) return false;
+      const tolerance = Math.max((maxX - minX), (maxY - minY)) * 0.15 || 4;
+
+      const nearCorners = points.filter((point) => {
+        const nearX =
+          Math.abs(point.x - minX) <= tolerance || Math.abs(point.x - maxX) <= tolerance;
+        const nearY =
+          Math.abs(point.y - minY) <= tolerance || Math.abs(point.y - maxY) <= tolerance;
+        return nearX && nearY;
+      });
+      return nearCorners.length >= 2;
+    };
+
+    const isSvgCloseIcon = (svg) => {
+      if (!(svg instanceof SVGElement)) return false;
+      const classText =
+        (typeof svg.className === 'object'
+          ? svg.className.baseVal
+          : svg.className || ''
+        ).toLowerCase();
+      if (classText.includes('close') || classText.includes('fechar')) {
+        return true;
+      }
+
+      const use = svg.querySelector('use');
+      if (use) {
+        const href =
+          (
+            use.getAttribute('xlink:href') ||
+            use.getAttribute('href') ||
+            ''
+          ).toLowerCase();
+        if (href.includes('close') || href.includes('ui-close') || href.includes('fechar')) {
+          return true;
+        }
+      }
+
+      const label = normalize(
+        svg.getAttribute('aria-label') ||
+          svg.getAttribute('title') ||
+          svg.closest('[aria-label]')?.getAttribute('aria-label')
+      );
+      if (label && CLOSE_TEXT.some((word) => label.includes(word))) {
+        return true;
+      }
+
+      const lines = Array.from(svg.querySelectorAll('line'));
+      const diagonalLines = lines.filter((line) => {
+        const x1 = line.getAttribute('x1');
+        const x2 = line.getAttribute('x2');
+        const y1 = line.getAttribute('y1');
+        const y2 = line.getAttribute('y2');
+        return x1 !== x2 && y1 !== y2;
+      });
+      if (diagonalLines.length >= 2) {
+        return true;
+      }
+
+      const paths = Array.from(svg.querySelectorAll('path'));
+      if (
+        paths.some((path) => {
+          const d = (path.getAttribute('d') || '').toLowerCase();
+          if (!d) return false;
+          if (d.includes('24.2905') && d.includes('2.67041') && d.includes('23.2505')) {
+            return true;
+          }
+          return (
+            (d.includes('45') && d.includes('-45')) ||
+            (d.includes('l') && d.includes('m') && d.includes('-'))
+          );
+        })
+      ) {
+        return true;
+      }
+
+      const points = paths.flatMap((path) => extractPoints(path.getAttribute('d')));
+      if (touchesCorners(svg, points)) {
+        return true;
+      }
+
+      return false;
+    };
+
+    const findCloseButton = (root) => {
+      for (const selector of CLOSE_SELECTORS) {
+        const btn = root.querySelector(selector);
+        if (btn) return btn;
+      }
+      if (DIRECT_QUERY) {
+        const direct = root.querySelector(DIRECT_QUERY);
+        if (direct) return direct;
+      }
+
+      const candidates = Array.from(
+        root.querySelectorAll('button, [role=\"button\"], .close, .close-btn, .icon-close')
+      );
+
+      return candidates.find((btn) => {
+        const label = normalize(
+          btn.innerText ||
+            btn.textContent ||
+            btn.getAttribute('aria-label') ||
+            btn.getAttribute('title')
+        );
+        return CLOSE_TEXT.some((word) => label.includes(word));
+      });
+
+      if (candidates) {
+        return candidates;
+      }
+
+      const svgButtons = Array.from(root.querySelectorAll('svg'));
+      for (const svg of svgButtons) {
+        if (!isSvgCloseIcon(svg)) continue;
+        const btn =
+          svg.closest('button, [role=\"button\"], .close, .close-btn, [class*=\"close\"], [aria-label]') ||
+          svg.parentElement;
+        if (btn) {
+          return btn;
+        }
+      }
+
+      return null;
+    };
+
+    const clickButton = (btn, reason) => {
+      try {
+        btn.click();
+        btn.dispatchEvent(
+          new MouseEvent('click', { bubbles: true, cancelable: true })
+        );
+        log('Botao de fechamento acionado', reason);
+        return true;
+      } catch (err) {
+        log('Falha ao clicar no botao de fechar', err?.message || err);
+        return false;
+      }
+    };
+
+    const tryClose = (element, reason = 'detected') => {
+      if (!(element instanceof HTMLElement)) return false;
+      if (processed.has(element)) return false;
+
+      if (DIRECT_QUERY && element.matches && element.matches(DIRECT_QUERY)) {
+        processed.add(element);
+        if (clickButton(element, `${reason}-direct`)) {
+          element.dataset.fastbotAds = 'ok';
+          return true;
+        }
+      }
+
+      processed.add(element);
+
+      const closeButton = findCloseButton(element);
+      if (closeButton) {
+        if (clickButton(closeButton, reason)) {
+          element.dataset.fastbotAds = 'ok';
+          processed.add(closeButton);
+          return true;
+        }
+      }
+
+      element.style.setProperty('display', 'none', 'important');
+      element.style.setProperty('visibility', 'hidden', 'important');
+      element.style.setProperty('opacity', '0', 'important');
+      element.dataset.fastbotAds = 'ok';
+      log('Elemento ocultado (sem botao visivel)', reason);
+      return true;
+    };
+
+    const inspectElement = (element) => {
+      if (!(element instanceof HTMLElement)) return;
+      if (DIRECT_QUERY && element.matches && element.matches(DIRECT_QUERY)) {
+        tryClose(element, 'match-direto');
+      }
+      if (looksLikeAd(element)) {
+        tryClose(element, 'elemento raiz');
+      }
+      if (SELECTOR_QUERY) {
+        element
+          .querySelectorAll(SELECTOR_QUERY)
+          .forEach((el) => tryClose(el, 'seletor'));
+      }
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement) {
+            inspectElement(node);
+          }
+        });
+      });
+    });
+
+    const start = () => {
+      if (!document.body) return;
+      inspectElement(document.body);
+      observer.observe(document.documentElement || document.body, {
+        childList: true,
+        subtree: true
+      });
+      log('Monitor de anuncios iniciado');
+    };
+
+    window.__fastbotAutoAdsManual = () => {
+      try {
+        inspectElement(document.body);
+        if (DIRECT_QUERY) {
+          document
+            .querySelectorAll(DIRECT_QUERY)
+            .forEach((el) => tryClose(el, 'manual-direct'));
+        }
+        if (SELECTOR_QUERY) {
+          document
+            .querySelectorAll(SELECTOR_QUERY)
+            .forEach((el) => tryClose(el, 'manual-selector'));
+        }
+      } catch (err) {
+        log('Erro no fechamento manual', err?.message || err);
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', start, { once: true });
+    } else {
+      start();
+    }
+}, AUTO_AD_GUARD);
+}
+
+async function handleClosePopups(page, action = {}) {
+  const customSelectors = Array.isArray(action.customSelectors)
+    ? action.customSelectors
+    : [];
+  const singleSelector = sanitizeSelectorValue(action.selector || '');
+
+  const allSelectors = [...customSelectors];
+  if (singleSelector) {
+    allSelectors.unshift(singleSelector);
+  }
+
+  const clickTargets = [];
+
+  for (const selector of allSelectors) {
+    const trimmed = sanitizeSelectorValue(selector);
+    if (!trimmed) continue;
+    try {
+      const elements = await page.$$(trimmed);
+      clickTargets.push(...elements);
+    } catch (error) {
+      console.warn(`[Fastbot] Erro ao capturar seletor custom ${trimmed}:`, error.message);
+    }
+  }
+
+  for (const handle of clickTargets) {
+    try {
+      await handle.click({ delay: 50 });
+    } catch (error) {
+      console.warn('[Fastbot] Falha ao clicar seletor custom:', error.message);
+    } finally {
+      await handle.dispose();
+    }
+    await page.waitForTimeout(120);
+  }
+
+  try {
+    await page.evaluate(
+      (selectors) => {
+        if (typeof window.__fastbotAutoAdsManual === 'function') {
+          window.__fastbotAutoAdsManual();
+          return;
+        }
+        selectors.forEach((selector) => {
+          document
+            .querySelectorAll(selector)
+            .forEach((el) => {
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('visibility', 'hidden', 'important');
+            });
+        });
+      },
+      FALLBACK_POPUP_SELECTORS
+    );
+  } catch (error) {
+    console.warn('[Fastbot] Erro ao fechar popups manualmente:', error.message);
   }
 }
 
+async function findElementByHint(page, hint, options = {}) {
+  const targetText = (hint || '').trim().toLowerCase();
+  if (!targetText) {
+    return null;
+  }
+
+  const timeout = options.timeout || 5000;
+  const pollInterval = options.pollInterval || 300;
+  const preferInputs = !!options.preferInputs;
+  const requestedIndex = Math.max(1, parseInt(options.matchIndex, 10) || 1);
+  const matchIndex = requestedIndex - 1;
+  const start = Date.now();
+
+  while (Date.now() - start <= timeout) {
+    const handle = await page.evaluateHandle(
+      (needle, opts) => {
+        const target = needle;
+        const preferInputsSearch = !!opts.preferInputs;
+        const requestedMatch =
+          typeof opts.matchIndex === 'number' && opts.matchIndex >= 0
+            ? Math.floor(opts.matchIndex)
+            : 0;
+        let seenMatches = 0;
+
+        const isVisible = (el) => {
+          const style = window.getComputedStyle(el);
+          if (style.visibility === 'hidden' || style.display === 'none') {
+            return false;
+          }
+          const rect = el.getBoundingClientRect();
+          return rect.width >= 1 && rect.height >= 1;
+        };
+
+        const matchesContent = (el) => {
+          const sources = [
+            el.innerText,
+            el.textContent,
+            el.getAttribute('aria-label'),
+            el.getAttribute('placeholder'),
+            el.getAttribute('name'),
+            el.getAttribute('id'),
+            el.getAttribute('title'),
+            el.value
+          ];
+          return sources
+            .filter(Boolean)
+            .some((value) => value.trim().toLowerCase().includes(target));
+        };
+
+        const registerMatch = (candidate) => {
+          if (!candidate) {
+            return null;
+          }
+          if (seenMatches === requestedMatch) {
+            return candidate;
+          }
+          seenMatches += 1;
+          return null;
+        };
+
+        const considerElement = (el) => {
+          if (!(el instanceof HTMLElement)) return null;
+          if (!isVisible(el)) return null;
+
+          if (matchesContent(el)) {
+            if (preferInputsSearch && el.tagName === 'LABEL' && el.control) {
+              return registerMatch(el.control);
+            }
+            return registerMatch(el);
+          }
+
+          if (
+            preferInputsSearch &&
+            el.tagName === 'LABEL' &&
+            el.control &&
+            matchesContent(el.control)
+          ) {
+            return registerMatch(el.control);
+          }
+
+          return null;
+        };
+
+        const inspectList = (elements) => {
+          for (const el of elements) {
+            const match = considerElement(el);
+            if (match) {
+              return match;
+            }
+          }
+          return null;
+        };
+
+        if (preferInputsSearch) {
+          const inputElements = Array.from(
+            document.querySelectorAll('input, textarea, select, [contenteditable=\"true\"]')
+          );
+          const matchedInput = inspectList(inputElements);
+          if (matchedInput) {
+            return matchedInput;
+          }
+        }
+
+        const clickableSelectors = [
+          'button',
+          '[role=\"button\"]',
+          'a',
+          'input[type=\"button\"]',
+          'input[type=\"submit\"]',
+          'label',
+          'div',
+          'span'
+        ];
+
+        for (const selector of clickableSelectors) {
+          const elements = Array.from(document.querySelectorAll(selector));
+          const match = inspectList(elements);
+          if (match) {
+            return match;
+          }
+        }
+
+        return null;
+      },
+      targetText,
+      { preferInputs }
+    );
+
+    const element = handle.asElement();
+    if (element) {
+      return element;
+    }
+
+    await handle.dispose();
+    if (Date.now() - start >= timeout) {
+      break;
+    }
+    await page.waitForTimeout(pollInterval);
+  }
+
+  return null;
+}
+
 async function handleClick(page, action) {
-  if (action.selector) {
-    await page.waitForSelector(action.selector, { timeout: 5000, visible: true });
+  const selectorValue = sanitizeSelectorValue(action.selector || '');
+  const hasSelector = selectorValue.length > 0;
+
+  if (hasSelector) {
+    await page.waitForSelector(selectorValue, {
+      timeout: 5000,
+      visible: true
+    });
     await page.evaluate((sel) => {
       const el = document.querySelector(sel);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, action.selector);
+    }, selectorValue);
     await page.waitForTimeout(300 + Math.random() * 200);
-    await page.click(action.selector);
-  } else {
-    await page.mouse.click(action.x, action.y);
+    await page.click(selectorValue);
+    return;
   }
+
+  const matchIndex = Math.max(1, parseInt(action.matchIndex, 10) || 1);
+
+  if (action.textMatch) {
+    const element = await findElementByHint(page, action.textMatch, {
+      preferInputs: false,
+      matchIndex,
+    });
+    if (!element) {
+      throw new Error(`Elemento com texto "${action.textMatch}" nao encontrado`);
+    }
+    try {
+      await element.focus().catch(() => {});
+      await element.click();
+    } finally {
+      await element.dispose();
+    }
+    return;
+  }
+
+  if (typeof action.x === 'number' && typeof action.y === 'number') {
+    await page.mouse.click(action.x, action.y);
+    return;
+  }
+
+  throw new Error('Acao de click invalida: defina seletor, texto ou coordenadas');
 }
 
 async function handleInput(page, action) {
@@ -592,16 +1270,49 @@ async function handleInput(page, action) {
   value = value.replace(/\{\{pix\}\}/g, macroVars.pixKey || '');
   value = value.replace(/\{\{username\}\}/g, macroVars.username || '');
   value = value.replace(/\{\{phone\}\}/g, macroVars.phoneNumber || '');
+  value = value.replace(/\{\{link\}\}/g, macroVars.link || '');
   
-  await page.waitForSelector(action.selector, { timeout: 5000, visible: true });
-  await page.focus(action.selector);
-  await page.waitForTimeout(200);
-  await page.click(action.selector, { clickCount: 3 });
-  await page.keyboard.press('Backspace');
-  
-  for (const char of value) {
-    await page.keyboard.type(char);
-    await page.waitForTimeout(50 + Math.random() * 100);
+  let targetHandle = null;
+  try {
+    const selectorValue = sanitizeSelectorValue(action.selector || '');
+    const hasSelector = selectorValue.length > 0;
+
+    if (hasSelector) {
+      await page.waitForSelector(selectorValue, {
+        timeout: 5000,
+        visible: true
+      });
+      targetHandle = await page.$(selectorValue);
+      if (!targetHandle) {
+        throw new Error(`Input nao encontrado para seletor ${selectorValue}`);
+      }
+      await page.focus(selectorValue);
+    } else if (action.textMatch) {
+      const matchIndex = Math.max(1, parseInt(action.matchIndex, 10) || 1);
+      targetHandle = await findElementByHint(page, action.textMatch, {
+        preferInputs: true,
+        matchIndex,
+      });
+      if (!targetHandle) {
+        throw new Error(`Campo com texto "${action.textMatch}" nao encontrado`);
+      }
+      await targetHandle.focus().catch(() => {});
+    } else {
+      throw new Error('Input sem seletor ou texto de referencia');
+    }
+
+    await page.waitForTimeout(200);
+    await targetHandle.click({ clickCount: 3 }).catch(() => {});
+    await page.keyboard.press('Backspace');
+
+    for (const char of value) {
+      await page.keyboard.type(char);
+      await page.waitForTimeout(50 + Math.random() * 100);
+    }
+  } finally {
+    if (targetHandle) {
+      await targetHandle.dispose();
+    }
   }
 }
 
@@ -649,11 +1360,12 @@ async function handleLoop(page, action, agent) {
 
 async function handleCondition(page, action, agent) {
   let conditionMet = false;
+  const selectorValue = sanitizeSelectorValue(action.selector || '');
   
   if (action.condition === 'element_exists') {
-    conditionMet = !!(await page.$(action.selector));
+    conditionMet = !!(await page.$(selectorValue));
   } else if (action.condition === 'element_not_exists') {
-    conditionMet = !(await page.$(action.selector));
+    conditionMet = !(await page.$(selectorValue));
   }
   
   const actionsToExecute = conditionMet ? (action.then || []) : (action.else || []);

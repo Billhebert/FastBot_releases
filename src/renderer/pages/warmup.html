@@ -70,18 +70,18 @@
 
     <div class="warmup-container">
       <div class="header">
-        <h1>🔥 Aquecimento de Perfis</h1>
-        <p>Reduza CAPTCHAs em até 95%</p>
+        <h1> Aquecimento de Perfis</h1>
+        <p>Reduza CAPTCHAs em ate 95%</p>
       </div>
 
       <div class="config-section">
-        <h2>⚙️ Configuração</h2>
+        <h2> Configuracao</h2>
 
         <div class="form-group">
           <label for="device">Dispositivo:</label>
           <select id="device">
-            <option value="desktop">🖥️ Desktop</option>
-            <option value="mobile">📱 Mobile</option>
+            <option value="desktop"> Desktop</option>
+            <option value="mobile"> Mobile</option>
           </select>
         </div>
 
@@ -94,46 +94,46 @@
           <label>Intensidade:</label>
           <div class="intensity-options">
             <div class="intensity-card" data-intensity="light">
-              <div class="icon">🌱</div>
+              <div class="icon"></div>
               <h3>Leve</h3>
               <div>3 sites, ~30s</div>
               <div>60%</div>
-              <div style="margin-top:10px; color:#555;">proteção básica</div>
+              <div style="margin-top:10px; color:#555;">protecao basica</div>
             </div>
 
             <div class="intensity-card selected" data-intensity="medium">
-              <div class="icon">🔥</div>
-              <h3>Médio</h3>
+              <div class="icon"></div>
+              <h3>Medio</h3>
               <div>5 sites, ~1min</div>
               <div>80%</div>
-              <div style="margin-top:10px; color:#555;">proteção recomendada</div>
+              <div style="margin-top:10px; color:#555;">protecao recomendada</div>
             </div>
 
             <div class="intensity-card" data-intensity="intense">
-              <div class="icon">⚡</div>
+              <div class="icon"></div>
               <h3>Intenso</h3>
               <div>8 sites, ~2min</div>
               <div>95%</div>
-              <div style="margin-top:10px; color:#555;">proteção máxima</div>
+              <div style="margin-top:10px; color:#555;">protecao maxima</div>
             </div>
           </div>
         </div>
 
         <div class="tip-box">
-          <strong>💡 Dica:</strong>
-          Aqueça perfis ANTES de executar macros. Perfis aquecidos têm 90% menos CAPTCHA!
+          <strong> Dica:</strong>
+          Aqueca perfis ANTES de executar macros. Perfis aquecidos tem 90% menos CAPTCHA!
         </div>
 
         <div class="action-buttons">
-          <button class="btn btn-primary" id="startWarmup">🔥 Iniciar Aquecimento</button>
-          <button class="btn btn-secondary" id="stopWarmup" style="display:none;">⏹ Parar</button>
+          <button class="btn btn-primary" id="startWarmup"> Iniciar Aquecimento</button>
+          <button class="btn btn-secondary" id="stopWarmup" style="display:none;"> Parar</button>
         </div>
 
         <div id="logContainer" class="log-container"></div>
       </div>
 
       <div id="statsSection" class="config-section" style="display:none;">
-        <h2>📊 Estatísticas</h2>
+        <h2> Estatisticas</h2>
         <div class="stats">
           <div class="stat-card">
             <div class="label">Aquecidos</div>
@@ -202,7 +202,7 @@
         // menu
         try {
           if (typeof createMenu === "function") {
-            document.getElementById("menu-container").innerHTML = createMenu();
+            document.getElementById("menu-container").innerHTML = createMenu(currentUser);
           }
         } catch {}
 
@@ -238,18 +238,18 @@
           isRunning = true;
           document.getElementById('startWarmup').style.display = 'none';
           document.getElementById('stopWarmup').style.display = 'inline-block';
-          addLog(`🔥 Iniciando ${selectedProfiles.length} perfil(is)...`, 'success');
+          addLog(` Iniciando ${selectedProfiles.length} perfil(is)...`, 'success');
 
           const startTime = Date.now();
 
           for (const profileIndex of selectedProfiles) {
             if (!isRunning) break;
             stats.total++;
-            addLog(`🔍 Perfil ${profileIndex}...`, 'info');
+            addLog(` Perfil ${profileIndex}...`, 'info');
 
             try {
               if (!window.electronAPI?.warmupProfile) {
-                throw new Error("electronAPI.warmupProfile não está disponível");
+                throw new Error("electronAPI.warmupProfile nao esta disponivel");
               }
 
               const result = await window.electronAPI.warmupProfile({
@@ -266,19 +266,19 @@
                   btn.classList.remove('selected');
                   btn.classList.add('warmed');
                 }
-                addLog(`✅ Perfil ${profileIndex} OK!`, 'success');
+                addLog(` Perfil ${profileIndex} OK!`, 'success');
               } else {
-                addLog(`❌ Erro: ${result?.error || "Falha desconhecida"}`, 'error');
+                addLog(` Erro: ${result?.error || "Falha desconhecida"}`, 'error');
               }
             } catch (error) {
-              addLog(`❌ ${error.message}`, 'error');
+              addLog(` ${error.message}`, 'error');
             }
 
             stats.time = (Date.now() - startTime) / 1000;
             updateStats();
           }
 
-          addLog(`🏁 Concluído!`, 'success');
+          addLog(` Concluido!`, 'success');
           document.getElementById('startWarmup').style.display = 'inline-block';
           document.getElementById('stopWarmup').style.display = 'none';
           isRunning = false;
@@ -286,7 +286,7 @@
 
         document.getElementById('stopWarmup').onclick = () => {
           isRunning = false;
-          addLog("⏹ Parando...", "warning");
+          addLog(" Parando...", "warning");
           document.getElementById('startWarmup').style.display = 'inline-block';
           document.getElementById('stopWarmup').style.display = 'none';
         };
@@ -300,7 +300,7 @@
             currentUser = await requireAuth();
           }
         } catch (error) {
-          console.error("Erro ao validar permissões:", error);
+          console.error("Erro ao validar permissoes:", error);
         }
 
         if (currentUser) {

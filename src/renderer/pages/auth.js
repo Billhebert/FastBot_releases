@@ -2,16 +2,23 @@
 // Usa apenas tabela users normal
 
 const PERMISSIONS = {
-  dev: ["macros", "pix", "proxies", "passwords", "execute", "warmup", "registrations"],
+  dev: ["macros", "pix", "proxies", "passwords", "execute"],
   creator: ["macros", "pix"],
-  consumer: ["proxies", "passwords", "pix", "execute", "registrations"],
+  consumer: ["proxies", "passwords", "pix", "execute"],
 };
 
 window.APP_PERMISSIONS = PERMISSIONS;
 
+const SESSION_CACHE_TTL = 60 * 1000; // 1 minuto
+let sessionStatusCache = {
+  token: null,
+  checkedAt: 0,
+  valid: true,
+};
+
 async function signup(email, password) {
   try {
-    // Hash da senha no cliente (básico)
+    // Hash da senha no cliente (basico)
     const passwordHash = btoa(password); // Trocar por bcrypt no servidor ideal
 
     const { data, error } = await supabaseClient
@@ -24,10 +31,18 @@ async function signup(email, password) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error?.code === "23505") {
+      throw new Error("Este email ja esta cadastrado. Faca login ou peca ao suporte para reativar o acesso.");
+    }
+    if (error) {
+      throw error;
+    }
     return data;
   } catch (error) {
-    throw new Error(error.message || "Erro ao cadastrar");
+    const message =
+      error.message ||
+      "Nao foi possivel concluir o cadastro. Verifique os dados e tente novamente.";
+    throw new Error(message);
   }
 }
 
@@ -94,7 +109,7 @@ async function logout() {
         .eq("session_token", token)
         .is("revoked_at", null);
     } catch (error) {
-      console.error("Erro ao encerrar sessão:", error);
+      console.error("Erro ao encerrar sessao:", error);
     }
   }
 
@@ -161,7 +176,7 @@ async function requirePagePermission(page) {
   if (!user) return null;
 
   if (!hasPermission(page)) {
-    alert("Você não tem permissão para acessar esta página.");
+    alert("Voce nao tem permissao para acessar esta pagina.");
     window.location.href = getDefaultPageForRole(user.role);
     return null;
   }
@@ -192,7 +207,7 @@ async function revokeActiveSessions(userId) {
       .eq("user_id", userId)
       .is("revoked_at", null);
   } catch (error) {
-    console.error("Erro ao revogar sessões antigas:", error);
+    console.error("Erro ao revogar sessoes antigas:", error);
   }
 }
 
@@ -201,19 +216,44 @@ async function isSessionActive(sessionToken) {
     return false;
   }
 
+  if (
+    sessionStatusCache.token === sessionToken &&
+    Date.now() - sessionStatusCache.checkedAt < SESSION_CACHE_TTL
+  ) {
+    return sessionStatusCache.valid;
+  }
+
   try {
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("user_sessions")
       .select("revoked_at")
       .eq("session_token", sessionToken)
-      .single();
+      .maybeSingle();
 
-    if (!data || data.revoked_at) {
-      return false;
+    if (error) {
+      console.warn("Falha ao verificar sessao:", error);
+      sessionStatusCache = {
+        token: sessionToken,
+        checkedAt: Date.now(),
+        valid: true,
+      };
+      return true;
     }
 
-    return true;
+    const isValid = !!data && !data.revoked_at;
+    sessionStatusCache = {
+      token: sessionToken,
+      checkedAt: Date.now(),
+      valid: isValid,
+    };
+    return isValid;
   } catch (error) {
-    return false;
+    console.warn("Erro inesperado na verificacao de sessao:", error);
+    sessionStatusCache = {
+      token: sessionToken,
+      checkedAt: Date.now(),
+      valid: true,
+    };
+    return true;
   }
 }

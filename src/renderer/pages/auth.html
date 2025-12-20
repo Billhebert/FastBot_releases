@@ -15,15 +15,15 @@
         <input type="email" id="login-email" placeholder="Email" required>
         <input type="password" id="login-password" placeholder="Senha" required>
         <button onclick="handleLogin()">Entrar</button>
-        <p>Não tem conta? <a href="#" onclick="toggleForm(); return false;">Cadastre-se</a></p>
+        <p>Nao tem conta? <a href="#" onclick="toggleForm(); return false;">Cadastre-se</a></p>
       </div>
 
       <div id="signup-form" class="form-section" style="display: none;">
         <h2>Cadastro</h2>
         <input type="email" id="signup-email" placeholder="Email" required>
-        <input type="password" id="signup-password" placeholder="Senha (mín. 6 caracteres)" required>
+        <input type="password" id="signup-password" placeholder="Senha (min. 6 caracteres)" required>
         <button onclick="handleSignup()">Cadastrar</button>
-        <p>Já tem conta? <a href="#" onclick="toggleForm(); return false;">Faça login</a></p>
+        <p>Ja tem conta? <a href="#" onclick="toggleForm(); return false;">Faca login</a></p>
       </div>
     </div>
   </div>
@@ -38,7 +38,7 @@
       const notification = document.createElement('div');
       notification.id = 'notification';
       notification.className = `notification notification-${type}`;
-      notification.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()">×</button>`;
+      notification.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()"></button>`;
       document.body.appendChild(notification);
       setTimeout(() => { if (notification.parentElement) notification.remove(); }, 5000);
     }
@@ -72,9 +72,19 @@
       }
 
       try {
-        await login(email, password);
+        const loggedUser = await login(email, password);
         showNotification('Login realizado!', 'success');
-        setTimeout(() => navigate('execute'), 1000);
+        const stored = getCurrentUser();
+        const nextPage = getDefaultPageForRole(
+          stored?.role || loggedUser?.role || 'consumer'
+        );
+        setTimeout(() => {
+          if (nextPage.endsWith('.html')) {
+            window.location.href = nextPage;
+          } else {
+            navigate(nextPage);
+          }
+        }, 800);
       } catch (error) {
         showNotification(error.message, 'error');
       }
@@ -90,13 +100,13 @@
       }
 
       if (password.length < 6) {
-        showNotification('Senha deve ter no mínimo 6 caracteres', 'warning');
+        showNotification('Senha deve ter no minimo 6 caracteres', 'warning');
         return;
       }
 
       try {
         await signup(email, password);
-        showNotification('Cadastro realizado! Faça login.', 'success');
+        showNotification('Cadastro realizado! Faca login.', 'success');
         setTimeout(() => toggleForm(), 2000);
       } catch (error) {
         showNotification(error.message, 'error');

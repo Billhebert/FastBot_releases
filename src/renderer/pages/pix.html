@@ -15,7 +15,7 @@
         <h3>Adicionar Chaves PIX</h3>
         <textarea
           id="pix-keys"
-          placeholder="Cole as chaves PIX aqui (uma por linha)&#10;&#10;Exemplos:&#10;123.456.789-00 (CPF)&#10;12.345.678/0001-00 (CNPJ)&#10;email@example.com (Email)&#10;+5511999999999 (Telefone)&#10;abc123def456 (Aleatória)"
+          placeholder="Cole as chaves PIX aqui (uma por linha)&#10;&#10;Exemplos:&#10;123.456.789-00 (CPF)&#10;12.345.678/0001-00 (CNPJ)&#10;email@example.com (Email)&#10;+5511999999999 (Telefone)&#10;abc123def456 (Aleatoria)"
           rows="8"
         ></textarea>
         <button onclick="addPixKeys()">Adicionar Chaves</button>
@@ -39,26 +39,26 @@
       async function init() {
         currentUser = await requirePagePermission("pix");
         if (!currentUser) return;
-        document.getElementById("menu-container").innerHTML = createMenu();
+        document.getElementById("menu-container").innerHTML = createMenu(currentUser);
         await loadPixKeys();
       }
 
       function detectPixKeyType(key) {
         const clean = key.replace(/\D/g, "");
 
-        // CPF: 11 dígitos
+        // CPF: 11 digitos
         if (clean.length === 11) return "cpf";
 
-        // CNPJ: 14 dígitos
+        // CNPJ: 14 digitos
         if (clean.length === 14) return "cnpj";
 
         // Email
         if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(key)) return "email";
 
-        // Telefone: +55 seguido de 10-11 dígitos
+        // Telefone: +55 seguido de 10-11 digitos
         if (/^\+?\d{10,15}$/.test(key)) return "phone";
 
-        // Chave aleatória (EVP)
+        // Chave aleatoria (EVP)
         return "random";
       }
 
@@ -114,7 +114,7 @@
           .filter((k) => k);
 
         if (keys.length === 0) {
-          showNotification("Nenhuma chave válida encontrada", "warning");
+          showNotification("Nenhuma chave valida encontrada", "warning");
           return;
         }
 
@@ -146,7 +146,7 @@
       }
 
       async function deletePixKey(id) {
-        const confirmed = await confirm("Confirma exclusão desta chave PIX?");
+        const confirmed = await confirm("Confirma exclusao desta chave PIX?");
         if (!confirmed) return;
 
         try {
@@ -158,7 +158,7 @@
 
           if (error) throw error;
 
-          showNotification("Chave PIX excluída", "success");
+          showNotification("Chave PIX excluida", "success");
           await loadPixKeys();
         } catch (error) {
           showNotification("Erro ao excluir: " + error.message, "error");

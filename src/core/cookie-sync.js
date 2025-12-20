@@ -47,7 +47,7 @@ function copyDirRecursive(src, dest) {
 
 function copyProfileArtifacts(sourceRoot, targetRoot, label) {
   if (!fs.existsSync(sourceRoot)) {
-    console.log('⚠️  Perfil origem não encontrado:', sourceRoot);
+    console.log('  Perfil origem nao encontrado:', sourceRoot);
     return false;
   }
 
@@ -74,18 +74,18 @@ function copyProfileArtifacts(sourceRoot, targetRoot, label) {
       }
 
       copied++;
-      console.log(`   ✅ ${relativePath}`);
+      console.log(`    ${relativePath}`);
     } catch (error) {
-      console.log(`   ⚠️  ${relativePath}: ${error.message}`);
+      console.log(`     ${relativePath}: ${error.message}`);
     }
   });
 
   if (copied > 0) {
-    console.log(`✅ ${copied} artefatos copiados (${label})`);
+    console.log(` ${copied} artefatos copiados (${label})`);
     return true;
   }
 
-  console.log('⚠️  Nenhum artefato copiado');
+  console.log('  Nenhum artefato copiado');
   return false;
 }
 
@@ -97,27 +97,27 @@ function clearProfileData(targetRoot) {
       fs.rmSync(targetRoot, { recursive: true, force: true });
     }
     fs.mkdirSync(targetRoot, { recursive: true });
-    console.log(`🧹 Sessão limpa em: ${targetRoot}`);
+    console.log(` Sessao limpa em: ${targetRoot}`);
   } catch (error) {
-    console.log(`⚠️  Não foi possível limpar ${targetRoot}: ${error.message}`);
+    console.log(`  Nao foi possivel limpar ${targetRoot}: ${error.message}`);
   }
 }
 
 function syncCookiesFromRecording(targetProfileIndex) {
-  console.log(`🔁 Sincronizando cookies: profile-0 -> profile-${targetProfileIndex}`);
+  console.log(` Sincronizando cookies: profile-0 -> profile-${targetProfileIndex}`);
   const sourceDefault = getProfileDefaultPath(0);
   const targetDefault = getProfileDefaultPath(targetProfileIndex);
   return copyProfileArtifacts(sourceDefault, targetDefault, `profile-${targetProfileIndex}`);
 }
 
 function syncPartitionFromRecording(partitionPath) {
-  console.log(`🔁 Sincronizando cookies do profile-0 -> ${partitionPath}`);
+  console.log(` Sincronizando cookies do profile-0 -> ${partitionPath}`);
   const sourceDefault = getProfileDefaultPath(0);
   return copyProfileArtifacts(sourceDefault, partitionPath, `partition ${path.basename(partitionPath)}`);
 }
 
 function syncRecordingFromPartition(partitionPath) {
-  console.log(`🔁 Copiando cookies da partição -> profile-0`);
+  console.log(` Copiando cookies da particao -> profile-0`);
   const targetDefault = getProfileDefaultPath(0);
   return copyProfileArtifacts(partitionPath, targetDefault, 'profile-0');
 }

@@ -1,6 +1,6 @@
 async function waitForManualCaptcha(page) {
   
-  // Aguardar atÃ© URL mudar (sair da pÃ¡gina do captcha)
+  // Aguardar ate URL mudar (sair da pagina do captcha)
   const currentUrl = page.url();
   
   while (true) {

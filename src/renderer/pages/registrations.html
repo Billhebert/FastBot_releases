@@ -60,6 +60,19 @@
         border-radius: 4px;
         border: 1px solid #ccc;
       }
+      .bulk-actions {
+        margin-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .bulk-actions button {
+        padding: 10px 16px;
+      }
+      .danger {
+        background: #c0392b;
+        color: #fff;
+      }
       .empty-state {
         padding: 30px;
         text-align: center;
@@ -83,8 +96,8 @@
   <body>
     <div id="menu-container"></div>
     <div class="container">
-      <h1>Cadastros concluídos</h1>
-      <p>Todos os dados registrados automaticamente após uma execução bem-sucedida.</p>
+      <h1>Cadastros concluidos</h1>
+      <p>Todos os dados registrados automaticamente apos uma execucao bem-sucedida.</p>
 
       <div class="filters">
         <input type="text" id="search-text" placeholder="Buscar por site, macro, email..." oninput="applyFilters()" />
@@ -93,6 +106,13 @@
         </select>
         <input type="date" id="filter-date" onchange="applyFilters()" />
         <button onclick="loadRegistrations()">Atualizar</button>
+      </div>
+
+      <div class="bulk-actions">
+        <button onclick="exportRegistrations('all')">Exportar todos (CSV)</button>
+        <button onclick="exportRegistrations('filtered')">Exportar filtro atual (CSV)</button>
+        <button class="danger" onclick="deleteByMacro()">Excluir macro filtrado</button>
+        <button class="danger" onclick="deleteAll()">Excluir todos os cadastros</button>
       </div>
 
       <div id="registrations-container" class="registrations-container">Carregando...</div>
@@ -110,7 +130,7 @@
       async function init() {
         currentUser = await requirePagePermission("registrations");
         if (!currentUser) return;
-        document.getElementById("menu-container").innerHTML = createMenu();
+        document.getElementById("menu-container").innerHTML = createMenu(currentUser);
         await loadRegistrations();
       }
 
@@ -140,26 +160,39 @@
       function populateMacroFilter() {
         const select = document.getElementById("filter-macro");
         const selected = select.value;
-        const macros = [...new Set(allRegistrations.map((r) => r.macro_name).filter(Boolean))];
-        select.innerHTML = '<option value="">Todos os macros</option>' + macros.map((name) => `<option value="${name}">${name}</option>`).join("");
-        if (macros.includes(selected)) {
+        const macroMap = new Map();
+        allRegistrations.forEach((reg) => {
+          if (reg.macro_id && !macroMap.has(reg.macro_id)) {
+            macroMap.set(reg.macro_id, reg.macro_name || "Macro");
+          }
+        });
+        const options = ['<option value="">Todos os macros</option>'];
+        macroMap.forEach((name, id) => {
+          options.push(`<option value="${id}">${name}</option>`);
+        });
+        select.innerHTML = options.join("");
+        if (selected && macroMap.has(selected)) {
           select.value = selected;
         }
       }
 
       function applyFilters() {
+        renderRegistrations(getFilteredRegistrations());
+      }
+
+      function getFilteredRegistrations() {
         const text = document.getElementById("search-text").value.toLowerCase();
-        const macro = document.getElementById("filter-macro").value;
+        const macroId = document.getElementById("filter-macro").value;
         const date = document.getElementById("filter-date").value;
 
-        const filtered = allRegistrations.filter((reg) => {
+        return allRegistrations.filter((reg) => {
           const matchesText =
             !text ||
             [reg.site_label, reg.macro_name, reg.email, reg.pix_key, reg.proxy_host]
               .filter(Boolean)
               .some((value) => value.toLowerCase().includes(text));
 
-          const matchesMacro = !macro || reg.macro_name === macro;
+          const matchesMacro = !macroId || reg.macro_id === macroId;
 
           const matchesDate =
             !date ||
@@ -167,8 +200,6 @@
 
           return matchesText && matchesMacro && matchesDate;
         });
-
-        renderRegistrations(filtered);
       }
 
       function renderRegistrations(list) {
@@ -190,7 +221,7 @@
                 <div class="registration-body">
                   <strong>${reg.site_label || reg.macro_name || "Cadastro"}</strong>
                   <div style="font-size:12px; color:#666;">
-                    Macro: ${reg.macro_name || "-"} • ${formatDate(reg.created_at)}
+                    Macro: ${reg.macro_name || "-"}  ${formatDate(reg.created_at)}
                   </div>
                   <div class="registration-meta">
                     <div>
@@ -220,6 +251,7 @@
                   <button onclick="copyLine('${escapeQuotes(reg.email)}', 'Email copiado')">Copiar email</button>
                   <button onclick="copyLine('${escapeQuotes(reg.password_value)}', 'Senha copiada')">Copiar senha</button>
                   <button onclick="copyLine('${escapeQuotes(formatSummary(reg))}', 'Resumo copiado')">Copiar resumo</button>
+                  <button class="danger" onclick="deleteRegistration('${reg.id}')">Excluir</button>
                 </div>
               </div>
             `;
@@ -263,6 +295,117 @@
         } catch {
           return value;
         }
+      }
+
+      function exportRegistrations(scope) {
+        const data = scope === "all" ? allRegistrations : getFilteredRegistrations();
+        if (!data.length) {
+          showNotification("Nada para exportar", "warning");
+          return;
+        }
+
+        const headers = [
+          "created_at",
+          "macro_name",
+          "device_type",
+          "site_label",
+          "email",
+          "password_value",
+          "pix_key",
+          "pix_type",
+          "proxy_host",
+          "proxy_port",
+          "proxy_username",
+          "notes",
+          "status"
+        ];
+
+        const rows = data.map((reg) => headers.map((key) => csvEscape(reg[key])));
+        const csv = [headers.join(";"), ...rows.map((row) => row.join(";"))].join("\n");
+        downloadCSV(csv, scope === "all" ? "cadastros_todos.csv" : "cadastros_filtrados.csv");
+        showNotification("Exportacao gerada com sucesso", "success");
+      }
+
+      function csvEscape(value) {
+        if (value === null || value === undefined) return '""';
+        const str = value.toString().replace(/"/g, '""');
+        return `"${str}"`;
+      }
+
+      function downloadCSV(content, filename) {
+        const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      async function deleteByMacro() {
+        const macroId = document.getElementById("filter-macro").value;
+        if (!macroId) {
+          showNotification("Selecione um macro para excluir", "warning");
+          return;
+        }
+
+        const macroName = document.querySelector(`#filter-macro option[value="${macroId}"]`)?.textContent || "macro selecionado";
+        const confirmed = window.confirm(`Deseja excluir TODOS os cadastros do macro "${macroName}"?`);
+        if (!confirmed) return;
+
+        const { error } = await supabaseClient
+          .from("registrations")
+          .delete()
+          .eq("user_id", currentUser.id)
+          .eq("macro_id", macroId);
+
+        if (error) {
+          showNotification("Erro ao excluir cadastros: " + error.message, "error");
+          return;
+        }
+
+        showNotification("Cadastros do macro excluidos!", "success");
+        await loadRegistrations();
+      }
+
+      async function deleteAll() {
+        const confirmed = window.confirm("Tem certeza que deseja excluir TODOS os seus cadastros? Esta acao nao pode ser desfeita.");
+        if (!confirmed) return;
+
+        const { error } = await supabaseClient
+          .from("registrations")
+          .delete()
+          .eq("user_id", currentUser.id);
+
+        if (error) {
+          showNotification("Erro ao excluir cadastros: " + error.message, "error");
+          return;
+        }
+
+        showNotification("Todos os cadastros foram excluidos.", "success");
+        await loadRegistrations();
+      }
+
+      async function deleteRegistration(registrationId) {
+        if (!registrationId) return;
+        const confirmed = window.confirm("Deseja excluir este cadastro?");
+        if (!confirmed) return;
+
+        const { error } = await supabaseClient
+          .from("registrations")
+          .delete()
+          .eq("id", registrationId)
+          .eq("user_id", currentUser.id);
+
+        if (error) {
+          showNotification("Erro ao excluir cadastro: " + error.message, "error");
+          return;
+        }
+
+        showNotification("Cadastro excluido.", "success");
+        await loadRegistrations();
       }
 
       init();

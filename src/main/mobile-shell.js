@@ -1,5 +1,4 @@
-const { BrowserWindow, BrowserView, ipcMain } = require('electron');
-const path = require('path');
+const { BrowserWindow, ipcMain } = require('electron');
 
 const REMOTE_DEBUGGING_PORT = Number(process.env.MOBILE_SHELL_DEBUG_PORT || 43133);
 
@@ -8,13 +7,7 @@ let nextShellId = 1;
 
 const SHELL_DIMENSIONS = {
   width: 430,
-  height: 900,
-  view: {
-    x: 24,
-    y: 90,
-    width: 382,
-    height: 720
-  }
+  height: 900
 };
 
 function createMobileShellWindow(options = {}) {
@@ -31,45 +24,29 @@ function createMobileShellWindow(options = {}) {
     titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
-      contextIsolation: true
-    }
-  });
-
-  window.loadFile(path.join(__dirname, '../renderer/pages/mobile-shell.html'));
-
-  const view = new BrowserView({
-    webPreferences: {
+      contextIsolation: true,
       partition,
-      javascript: true,
-      contextIsolation: false
+      javascript: true
     }
   });
-
-  window.setBrowserView(view);
-
-  const applyViewBounds = () => {
-    view.setBounds({
-      x: SHELL_DIMENSIONS.view.x,
-      y: SHELL_DIMENSIONS.view.y,
-      width: SHELL_DIMENSIONS.view.width,
-      height: SHELL_DIMENSIONS.view.height
-    });
-    view.setAutoResize({ width: true, height: true });
-  };
 
   window.once('ready-to-show', () => {
-    applyViewBounds();
     window.show();
   });
 
-  window.on('resize', applyViewBounds);
   window.on('closed', () => {
     shells.delete(id);
   });
 
-  view.webContents.loadURL('about:blank');
+  window.loadURL('about:blank');
 
-  shells.set(id, { id, window, view, targetId: null, partition });
+  shells.set(id, {
+    id,
+    window,
+    view: window,
+    targetId: null,
+    partition
+  });
 
   return id;
 }

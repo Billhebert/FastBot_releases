@@ -12,11 +12,11 @@
   <input id="test-input" placeholder="Digite algo">
   <br><br>
   <select id="test-select">
-    <option value="1">Opção 1</option>
-    <option value="2">Opção 2</option>
+    <option value="1">Opcao 1</option>
+    <option value="2">Opcao 2</option>
   </select>
   <br><br>
-  <button onclick="showActions()">Ver Ações Gravadas</button>
+  <button onclick="showActions()">Ver Acoes Gravadas</button>
 
   <script>
     // Mesmo script do recorder
@@ -68,7 +68,7 @@
     }, true);
 
     function showActions() {
-      alert('Ações gravadas: ' + window.__recordedActions.length + '\n\n' + 
+      alert('Acoes gravadas: ' + window.__recordedActions.length + '\n\n' + 
             JSON.stringify(window.__recordedActions, null, 2));
     }
   </script>

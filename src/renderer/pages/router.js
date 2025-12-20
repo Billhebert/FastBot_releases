@@ -1,11 +1,69 @@
-// Sistema de Navegação
+// Sistema de Navegacao
 
 const ROUTER_PERMISSIONS =
   window.APP_PERMISSIONS || {
-    dev: ["macros", "pix", "proxies", "passwords", "execute", "warmup", "registrations"],
+    dev: ["macros", "pix", "proxies", "passwords", "execute"],
     creator: ["macros", "pix"],
-    consumer: ["proxies", "passwords", "pix", "execute", "registrations"],
+    consumer: ["proxies", "passwords", "pix", "execute"],
   };
+
+const APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
+window.APP_VERSION = APP_VERSION;
+
+(function ensureElectronBridge() {
+  if (window.electronAPI) {
+    if (!window.fastbotVersion) {
+      window.fastbotVersion = APP_VERSION;
+    }
+    return;
+  }
+
+  try {
+    if (typeof require !== 'function') {
+      return;
+    }
+
+    const { ipcRenderer } = require('electron');
+    if (!ipcRenderer) {
+      return;
+    }
+
+    window.electronAPI = {
+      startRecording: (options) => ipcRenderer.invoke('start-recording', options),
+      stopRecording: () => ipcRenderer.invoke('stop-recording'),
+      executeMacro: (config) => ipcRenderer.invoke('execute-macro', config),
+      warmupProfile: (config) => ipcRenderer.invoke('warmup-profile', config),
+      onUpdateAvailable: (callback) => ipcRenderer.on('update-available', callback),
+      onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', callback),
+      windowControls: {
+        minimize: () => ipcRenderer.invoke('window-control', 'minimize'),
+        maximize: () => ipcRenderer.invoke('window-control', 'maximize'),
+        close: () => ipcRenderer.invoke('window-control', 'close'),
+      },
+      mobileShell: {
+        create: (options) => ipcRenderer.invoke('mobile-shell:create', options),
+        load: ({ id, url }) => ipcRenderer.invoke('mobile-shell:load', { id, url }),
+        show: (id) => ipcRenderer.invoke('mobile-shell:show', id),
+        focus: (id) => ipcRenderer.invoke('mobile-shell:focus', id),
+        close: (id) => ipcRenderer.invoke('mobile-shell:close', id),
+      },
+    };
+
+    if (!window.fastbotVersion) {
+      try {
+        const path = require('path');
+        const pkg = require(path.resolve(__dirname, '../../../package.json'));
+        window.fastbotVersion = pkg.version || APP_VERSION;
+      } catch (versionError) {
+        window.fastbotVersion = APP_VERSION;
+      }
+    }
+
+    console.info('[Fastbot] electronAPI fallback habilitado via Node Integration.');
+  } catch (bridgeError) {
+    console.warn('[Fastbot] Nao foi possivel inicializar o fallback electronAPI:', bridgeError);
+  }
+})();
 
 function navigate(page) {
   if (page === 'auth') {
@@ -14,51 +72,126 @@ function navigate(page) {
   }
 
   if (!hasPermission(page)) {
-    alert('Você não tem permissão');
+    alert('Voce nao tem permissao');
     return;
   }
 
   window.location.href = page + '.html';
 }
 
-function createMenu() {
-  const user = getCurrentUser();
-  if (!user) return '';
+function ensureLayoutFrame() {
+  if (!document.body.classList.contains('app-layout')) {
+    document.body.classList.add('app-layout');
+  }
+}
+
+function createMenu(userOverride) {
+  const safeGetUser = () => {
+    try {
+      return typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    } catch (error) {
+      console.warn('createMenu: getCurrentUser falhou', error);
+      return null;
+    }
+  };
+
+  const user = userOverride || safeGetUser();
+  ensureLayoutFrame();
+
+  if (!user) {
+    return `
+      <aside class="app-sidebar">
+        <div class="sidebar-logo">
+          <div class="logo-mark">FB</div>
+          <div>
+            <strong>FASTBOT</strong>
+            <p style="font-size:12px; letter-spacing:0.15em;">Auto Farm</p>
+          </div>
+        </div>
+
+        <div class="sidebar-license">
+          <p><strong>Versao ${APP_VERSION}</strong></p>
+          <p>Conecte-se para acessar o menu completo.</p>
+        </div>
+
+        <div class="nav-stack">
+          <button class="sidebar-btn active" onclick="navigate('auth')">
+            <span class="nav-dot" aria-hidden="true"></span>
+            <span>Ir para Login</span>
+          </button>
+        </div>
+
+        <div class="sidebar-footer">
+          <p>Sem usuario ativo. Clique em "Ir para Login".</p>
+        </div>
+      </aside>
+    `;
+  }
+
+  const currentPage =
+    (window.location.pathname.split('/').pop() || '').replace('.html', '');
+
+  const navStructure = [
+    { page: 'macros', label: user.role === 'dev' ? 'Criar macros' : 'Inicio' },
+    { page: 'pix', label: 'Chaves PIX' },
+    { page: 'passwords', label: 'Contas' },
+    { page: 'proxies', label: 'Proxies' },
+    { page: 'execute', label: 'Jogar' }
+  ];
 
   const userPermissions = ROUTER_PERMISSIONS[user.role] || [];
-  const menuItems = [];
 
-  if (userPermissions.includes('macros')) {
-    menuItems.push('<button onclick="navigate(\'macros\')">Macros</button>');
-  }
-  if (userPermissions.includes('pix')) {
-    menuItems.push('<button onclick="navigate(\'pix\')">PIX</button>');
-  }
-  if (userPermissions.includes('proxies')) {
-    menuItems.push('<button onclick="navigate(\'proxies\')">Proxies</button>');
-  }
-  if (userPermissions.includes('passwords')) {
-    menuItems.push('<button onclick="navigate(\'passwords\')">Senhas</button>');
-  }
-  if (userPermissions.includes('execute')) {
-    menuItems.push('<button onclick="navigate(\'execute\')">Executar</button>');
-  }
-  if (userPermissions.includes('warmup')) {
-    menuItems.push('<button onclick="navigate(\'warmup\')">🔥 Aquecer</button>');
-  }
-  if (userPermissions.includes('registrations')) {
-    menuItems.push('<button onclick="navigate(\'registrations\')">Cadastros</button>');
-  }
+  const navButtons = navStructure
+    .filter(({ page }) => userPermissions.includes(page))
+    .map(
+      ({ page, label }) => `
+        <button class="sidebar-btn ${currentPage === page ? 'active' : ''}" onclick="navigate('${page}')">
+          <span class="nav-dot" aria-hidden="true"></span>
+          <span>${label}</span>
+        </button>
+      `
+    )
+    .join('');
 
-  menuItems.push('<button onclick="logout()">Sair</button>');
+  const roleLabel = (user.role || 'user').toUpperCase();
+  const shortId = user.id ? `${user.id}`.slice(0, 6) : '000000';
 
   return `
-    <nav class="menu">
-      <div class="user-info">${user.email} (${user.role})</div>
-      ${menuItems.join('')}
-    </nav>
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">FB</div>
+        <div>
+          <strong>FASTBOT</strong>
+          <p style="font-size:12px; letter-spacing:0.15em;">Auto Farm</p>
+        </div>
+      </div>
+
+      <div class="sidebar-user">
+        <p class="label">Usuario</p>
+        <p class="value">${user.email}</p>
+        <p class="label" style="margin-top:10px;">Perfil</p>
+        <p class="value">${roleLabel}</p>
+      </div>
+
+      <div class="sidebar-license">
+        <p><strong>Versao ${APP_VERSION}</strong></p>
+        <p>Licenca vinculada ao ID ${shortId}...</p>
+      </div>
+
+      <div class="nav-stack">
+        ${navButtons}
+      </div>
+
+      <div class="sidebar-footer">
+        <p>Contato / Suporte</p>
+        <button type="button" style="margin-top:8px;" onclick="logout()">
+          Sair
+        </button>
+      </div>
+    </aside>
   `;
 }
+
 
 (function initTitlebar() {
   const setup = () => {
@@ -105,5 +238,19 @@ function createMenu() {
     document.addEventListener('DOMContentLoaded', setup);
   } else {
     setup();
+  }
+})();
+
+(function bootstrapSidebar() {
+  const mount = () => {
+    const container = document.getElementById('menu-container');
+    if (!container) return;
+    container.innerHTML = createMenu();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
   }
 })();

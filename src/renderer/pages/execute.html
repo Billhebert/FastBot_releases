@@ -4,167 +4,189 @@
     <meta charset="UTF-8" />
     <title>Executar Macros</title>
     <link rel="stylesheet" href="./styles.css" />
-    <style>
-      .execution-config {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-      }
-      .grid-preview {
-        margin: 20px 0;
-        text-align: center;
-      }
-      .grid-visual {
-        display: inline-block;
-        background: #2c3e50;
-        padding: 15px;
-        border-radius: 8px;
-        position: relative;
-        width: 300px;
-        height: 200px;
-      }
-      .grid-cell {
-        position: absolute;
-        background: #3498db;
-        border: 2px solid white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-      }
-      .instance-config {
-        background: #f8f9fa;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border-left: 4px solid #3498db;
-      }
-      .registration-note {
-        background: #eef6ff;
-        border-left: 4px solid #3498db;
-        padding: 10px 15px;
-        border-radius: 6px;
-        font-size: 13px;
-        color: #2c3e50;
-      }
-      .instance-header {
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #2c3e50;
-      }
-      .btn-execute {
-        background: #27ae60;
-        font-size: 18px;
-        padding: 15px;
-        margin-top: 20px;
-      }
-      .execution-log {
-        background: #1e1e1e;
-        color: #0f0;
-        font-family: monospace;
-        padding: 15px;
-        border-radius: 8px;
-        height: 300px;
-        overflow-y: auto;
-        margin-top: 20px;
-      }
-      .execution-log p {
-        margin: 2px 0;
-        font-size: 12px;
-      }
-    </style>
   </head>
   <body>
     <div id="menu-container"></div>
 
-    <div class="container">
-      <h1> Executar Macros</h1>
-
-      <div class="execution-config">
-        <div class="form-group">
-          <label>Macro:</label>
-          <select id="macro-select" onchange="updateMacroInfo()">
-            <option value="">Selecione um macro</option>
-          </select>
-          <div
-            id="macro-info"
-            style="margin-top: 10px; font-size: 12px; color: #666"
-          ></div>
+    <div class="workspace">
+      <header class="workspace-header">
+        <div>
+          <p class="title" id="app-version-label">Fastbot</p>
+          <p class="meta" id="license-expiration">Expiracao da licenca: verificando...</p>
         </div>
-
-        <div class="form-group">
-          <label>Quantidade de Janelas:</label>
-          <input
-            type="number"
-            id="instances-count"
-            value="1"
-            min="1"
-            max="12"
-            onchange="updateGridPreview()"
-          />
-          <small>Máximo: 12 janelas</small>
+        <div class="header-actions">
+          <div class="user-chip" id="user-chip">Usuario nao identificado</div>
+          <button class="btn-ghost" type="button" onclick="navigate('passwords')">
+            Abrir Contas
+          </button>
         </div>
+      </header>
 
-        <div class="grid-preview">
-          <strong>Preview do Grid</strong>
-          <div id="grid-visual-container"></div>
-        </div>
+      <div class="panels-grid">
+        <section class="panel nav-panel">
+          <div class="panel-header">
+            <strong>Configuracao de Navegacao</strong>
+            <span class="meta">Modo mobile / desktop - Chrome indetectavel</span>
+          </div>
 
-        <div class="form-group">
-          <label>Identificação do cadastro / site:</label>
-          <input
-            type="text"
-            id="registration-site"
-            placeholder="Ex: asdf.com, campanha Instagram, loja XPTO"
-          />
-        </div>
+          <div class="execution-config">
+            <div class="form-group">
+              <label>Macro</label>
+              <select id="macro-select" onchange="updateMacroInfo()">
+                <option value="">Selecione um macro</option>
+              </select>
+              <div id="macro-info" class="helper-text"></div>
+            </div>
 
-        <div class="form-group">
-          <label>Observações (opcional):</label>
-          <textarea
-            id="registration-notes"
-            rows="2"
-            placeholder="Anote campos extras (ex: valor do plano, cupom usado, etc.)"
-          ></textarea>
-        </div>
+            <div class="form-group">
+              <label>Quantidade de janelas</label>
+              <input
+                type="number"
+                id="instances-count"
+                value="1"
+                min="1"
+                max="12"
+                onchange="updateGridPreview()"
+              />
+              <small class="helper-text">Maximo: 12 sessoes simultaneas</small>
+            </div>
 
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-          <input type="checkbox" id="registration-save" checked />
-          Registrar automaticamente cada cadastro concluído (email, senha, proxy, PIX...)
-        </label>
+            <div class="toggle-inline">
+              <label>
+                <span>Registrar automaticamente cada cadastro concluido</span>
+                <input type="checkbox" id="registration-save" checked />
+              </label>
+              <label>
+                <span>Iniciar cada janela com sessao limpa</span>
+                <input type="checkbox" id="fresh-session" />
+              </label>
+            </div>
+            <small class="helper-text">
+              Desative a sessao limpa para reaproveitar logins gravados e evitar novos CAPTCHAs.
+            </small>
+          </div>
 
-        <p class="registration-note" style="margin-top:10px;">
-          Após um macro terminar com sucesso, os dados desta sessão serão salvos na aba <strong>Cadastros</strong> para copiar quando quiser.
-        </p>
+          <button onclick="executeAll()" class="btn-primary" id="btn-execute">
+            >> Executar Macros
+          </button>
+        </section>
 
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-top:10px;">
-          <input type="checkbox" id="fresh-session" />
-          Abrir cada janela com sessão limpa (não reutiliza cookies gravados)
-        </label>
-        <small style="display:block; color:#666; margin-top:4px;">
-          Deixe desmarcado para reaproveitar o login gravado e evitar novos CAPTCHAs.
-        </small>
+        <section class="panel panel-switches">
+          <div class="panel-header">
+            <strong>Funcionalidades rapidas</strong>
+            <span class="meta">Sem envelopes  bonus</span>
+          </div>
+
+          <div class="switch-grid">
+            <div class="switch-row">
+              <div>
+                <strong>Usar dados de proxy</strong>
+                <small>Proxy desativado (1 conexao direta)</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-proxy" checked />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="switch-row" data-switch-row="rotate">
+              <div>
+                <strong>Proxy rotativo</strong>
+                <small>Alterna entre as proxies cadastradas</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-proxy-rotate" />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <strong>Multiplos links</strong>
+                <small>Executa lista de URLs em sequencia</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-multi-links" />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <strong>Captcha auto-resolver</strong>
+                <small>Utiliza o solver experimental integrado</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-auto-captcha" checked />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <strong>Sem envelopes-bonus</strong>
+                <small>Oculta pop-ups e notificacoes promocionais</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-bonus" checked />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <strong>Fechar anuncios automaticamente</strong>
+                <small>Tenta identificar pop-ups publicitarios e fechar sozinho</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-auto-ads" checked />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <strong>Simular modo retrato</strong>
+                <small>Forca janelas mobile no layout vertical</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-portrait" />
+                <span class="switch-slider" aria-hidden="true"></span>
+              </label>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div id="instances-config" style="display: none">
-        <h3> Configuração Individual</h3>
-        <div id="instances-list"></div>
-      </div>
+      <div class="panels-grid">
+        <section class="panel">
+          <div class="panel-header">
+            <strong>Distribuicao das janelas</strong>
+            <span class="meta">Chrome nao necessita API</span>
+          </div>
+          <div class="grid-preview">
+            <strong>Preview do grid</strong>
+            <div id="grid-visual-container"></div>
+          </div>
 
-      <button onclick="executeAll()" class="btn-execute" id="btn-execute">
-        ▶ Executar Macros
-      </button>
+          <div id="instances-config" style="display: none">
+            <h3 class="section-title">Configuracao individual</h3>
+            <div id="instances-list"></div>
+          </div>
+        </section>
 
-      <div class="execution-status">
-        <h3> Status da Execução</h3>
-        <div id="status-summary">Aguardando execução...</div>
-        <div class="execution-log" id="execution-log"></div>
+        <section class="panel">
+          <div class="panel-header">
+            <strong>Status da execucao</strong>
+            <span class="meta">Logs em tempo real</span>
+          </div>
+          <div id="status-summary" class="status-summary">Aguardando execucao...</div>
+          <div class="execution-log" id="execution-log"></div>
+        </section>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="notifications.js"></script>
     <script src="supabase-client.js"></script>
     <script src="auth.js"></script>
@@ -173,37 +195,90 @@
     <script>
       let currentMacro = null;
       let proxies = [];
-      let passwords = [];
       let pixKeys = [];
       let currentUser = null;
+      let licenseMetadata = null;
+      const CURRENT_APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
+      const toggleState = {
+        proxyEnabled: true,
+        proxyRotate: false,
+        multiLinks: false,
+        autoCaptcha: true,
+        disableBonus: true,
+        portraitMode: false,
+        autoCloseAds: true,
+      };
 
       async function init() {
         currentUser = await requirePagePermission("execute");
         if (!currentUser) return;
-        document.getElementById("menu-container").innerHTML = createMenu();
+        document.getElementById("menu-container").innerHTML = createMenu(currentUser);
+        const versionLabel = document.getElementById("app-version-label");
+        if (versionLabel) {
+          versionLabel.textContent = `Fastbot | Versao ${CURRENT_APP_VERSION}`;
+        }
+        setupSwitches();
+        updateWorkspaceHeader();
         await loadMacros();
         await loadProxies();
-        await loadPasswords();
         await loadPixKeys();
+        await loadLicenseMetadata();
       }
 
       async function loadMacros() {
-        const { data } = await supabaseClient
-          .from("macros")
-          .select("*")
-          .eq("enabled", true)
-          .order("name");
-
         const select = document.getElementById("macro-select");
-        select.innerHTML = '<option value="">Selecione um macro</option>';
+        const macroInfo = document.getElementById("macro-info");
+        select.disabled = true;
+        macroInfo.textContent = "Carregando macros...";
 
-        if (data && data.length > 0) {
-          data.forEach((macro) => {
+        try {
+          let query = supabaseClient
+            .from("macros")
+            .select("*")
+            .order("name");
+
+          if (!currentUser || currentUser.role !== "dev") {
+            query = query.eq("enabled", true);
+          }
+
+          const { data, error } = await query;
+          if (error) {
+            throw error;
+          }
+
+          const macros = data || [];
+          select.innerHTML = '<option value="">Selecione um macro</option>';
+
+          if (!macros.length) {
+            macroInfo.innerHTML = `
+              Nenhum macro encontrado para este usuario.<br>
+              <button class="btn-ghost" style="margin-top:8px;" onclick="navigate('macros')">
+                Criar macros agora
+              </button>
+            `;
+            document.getElementById("btn-execute").disabled = true;
+            currentMacro = null;
+            updateGridPreview();
+            return;
+          }
+
+          document.getElementById("btn-execute").disabled = false;
+          macroInfo.textContent = "Selecione um macro para ver detalhes.";
+
+          macros.forEach((macro) => {
             const option = document.createElement("option");
             option.value = macro.id;
             option.textContent = `${macro.name} (${macro.device_type})`;
             select.appendChild(option);
           });
+        } catch (loadError) {
+          console.error("Erro ao carregar macros:", loadError);
+          showNotification("Erro ao carregar macros: " + loadError.message, "error");
+          macroInfo.innerHTML =
+            "Erro ao carregar macros. Tente atualizar ou verifique sua conexao.";
+          document.getElementById("btn-execute").disabled = true;
+        } finally {
+          select.disabled = false;
         }
       }
 
@@ -213,14 +288,6 @@
           .select("*")
           .eq("user_id", currentUser.id);
         proxies = data || [];
-      }
-
-      async function loadPasswords() {
-        const { data } = await supabaseClient
-          .from("passwords")
-          .select("*")
-          .eq("user_id", currentUser.id);
-        passwords = data || [];
       }
 
       async function loadPixKeys() {
@@ -252,13 +319,99 @@
           document.getElementById("macro-info").innerHTML = `
             <strong>${data.name}</strong><br>
             Device: ${data.device_type}<br>
-            Ações: ${actions.length}<br>
+            Acoes: ${actions.length}<br>
             Delay: ${data.delay_min || 500}ms - ${data.delay_max || 2000}ms
           `;
           
-          console.log('ℹ Macro selecionado:', data);
+          console.log('i Macro selecionado:', data);
           updateGridPreview();
         }
+      }
+
+      function setupSwitches() {
+        const mappings = [
+          { id: "switch-proxy", key: "proxyEnabled", onChange: handleProxyToggle },
+          { id: "switch-proxy-rotate", key: "proxyRotate", onChange: () => rebuildInstanceControls() },
+          { id: "switch-multi-links", key: "multiLinks", onChange: () => rebuildInstanceControls() },
+          { id: "switch-auto-captcha", key: "autoCaptcha" },
+          { id: "switch-bonus", key: "disableBonus" },
+          { id: "switch-auto-ads", key: "autoCloseAds" },
+          {
+            id: "switch-portrait",
+            key: "portraitMode",
+            onChange: () => updateGridPreview(),
+          },
+        ];
+
+        mappings.forEach(({ id, key, onChange }) => {
+          const input = document.getElementById(id);
+          if (!input) return;
+          input.checked = !!toggleState[key];
+          input.addEventListener("change", () => {
+            toggleState[key] = input.checked;
+            if (onChange) {
+              onChange(input.checked);
+            }
+          });
+        });
+
+        handleProxyToggle(toggleState.proxyEnabled);
+      }
+
+      function handleProxyToggle(enabled) {
+        const rotateSwitch = document.getElementById("switch-proxy-rotate");
+        const rotateRow = document.querySelector('[data-switch-row="rotate"]');
+        if (rotateSwitch) {
+          rotateSwitch.disabled = !enabled;
+          if (!enabled) {
+            toggleState.proxyRotate = false;
+            rotateSwitch.checked = false;
+          } else {
+            rotateSwitch.checked = !!toggleState.proxyRotate;
+          }
+        }
+        if (rotateRow) {
+          rotateRow.classList.toggle("disabled", !enabled);
+        }
+        rebuildInstanceControls();
+      }
+
+      function renderProxyControl(index, enabled) {
+        if (!enabled) {
+          return `<p class="helper-text">Conexao direta</p>`;
+        }
+        if (!proxies.length) {
+          return `<p class="helper-text">Nenhuma proxy cadastrada</p>`;
+        }
+        if (toggleState.proxyRotate) {
+          const autoProxy = proxies[index % proxies.length];
+          return `<p class="helper-text">Automatico: ${autoProxy.host}:${autoProxy.port}</p>`;
+        }
+        return `
+          <select id="proxy-${index}" style="width: 100%; padding: 5px;">
+            <option value="">Sem proxy</option>
+            ${proxies
+              .map((p) => `<option value="${p.id}">${p.host}:${p.port}</option>`)
+              .join("")}
+          </select>
+        `;
+      }
+
+      function getProxyForInstance(index) {
+        if (!toggleState.proxyEnabled || !proxies.length) {
+          return null;
+        }
+        if (toggleState.proxyRotate) {
+          return proxies[index % proxies.length];
+        }
+        const proxyId = document.getElementById(`proxy-${index}`)?.value;
+        return proxyId ? proxies.find((p) => p.id === proxyId) : null;
+      }
+
+      function rebuildInstanceControls() {
+        if (!currentMacro) return;
+        const count = parseInt(document.getElementById("instances-count").value) || 1;
+        renderInstancesConfig(count);
       }
 
       function updateGridPreview() {
@@ -269,8 +422,8 @@
           return;
         }
 
-        const device = currentMacro.device_type;
-        const positions = calculatePositions(count, device);
+        const deviceOverride = toggleState.portraitMode ? "mobile" : currentMacro.device_type;
+        const positions = calculatePositions(count, deviceOverride);
 
         const container = document.getElementById("grid-visual-container");
         let html = `<div class="grid-visual">`;
@@ -289,7 +442,7 @@
         html += `</div>`;
         html += `<p style="margin-top: 10px;"><strong>${count}</strong> janela${
           count > 1 ? "s" : ""
-        } - <strong>${device}</strong></p>`;
+        } - <strong>${deviceOverride}</strong></p>`;
 
         document.getElementById("grid-visual-container").innerHTML = html;
 
@@ -298,35 +451,25 @@
 
       function renderInstancesConfig(count) {
         const container = document.getElementById("instances-list");
+        if (!currentMacro) {
+          container.innerHTML = "";
+          document.getElementById("instances-config").style.display = "none";
+          return;
+        }
+
         let html = "";
+        const proxiesEnabled = toggleState.proxyEnabled;
+        const multiLinksEnabled = toggleState.multiLinks;
 
         for (let i = 0; i < count; i++) {
           html += `
           <div class="instance-config">
             <div class="instance-header"> Janela ${i + 1}</div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <div>
                 <label style="font-size: 12px;">Proxy:</label>
-                <select id="proxy-${i}" style="width: 100%; padding: 5px;">
-                  <option value="">Sem proxy</option>
-                  ${proxies
-                    .map(
-                      (p) =>
-                        `<option value="${p.id}">${p.host}:${p.port}</option>`
-                    )
-                    .join("")}
-                </select>
-              </div>
-              
-              <div>
-                <label style="font-size: 12px;">Senha:</label>
-                <select id="password-${i}" style="width: 100%; padding: 5px;">
-                  <option value="">Sem senha</option>
-                  ${passwords
-                    .map((p) => `<option value="${p.id}">${p.label}</option>`)
-                    .join("")}
-                </select>
+                ${renderProxyControl(i, proxiesEnabled)}
               </div>
               
               <div>
@@ -345,8 +488,22 @@
                 </select>
               </div>
             </div>
+            <p class="helper-text" style="margin-top:8px;">Senha gerada automaticamente para esta janela.</p>
+
+            ${
+              multiLinksEnabled
+                ? `<div class="form-group" style="margin-top:8px;">
+                    <label style="font-size:12px;">Link / URL para esta janela</label>
+                    <input type="text" id="link-${i}" placeholder="https://..." style="width:100%; padding:6px;" />
+                  </div>`
+                : ""
+            }
           </div>
         `;
+        }
+
+        if (!proxiesEnabled) {
+          html += `<p class="helper-text" style="margin-top:8px;">Proxies desativadas: conexao direta em todas as janelas.</p>`;
         }
 
         container.innerHTML = html;
@@ -360,16 +517,14 @@
         }
 
         const count = parseInt(document.getElementById("instances-count").value) || 1;
-        const siteLabel = document.getElementById("registration-site").value.trim();
-        const notes = document.getElementById("registration-notes").value.trim();
         const shouldRegister = document.getElementById("registration-save").checked;
         const freshSession = document.getElementById("fresh-session").checked;
-        const device = currentMacro.device_type; // Usar device do macro salvo
+        const device = toggleState.portraitMode ? "mobile" : currentMacro.device_type;
 
-        console.log('ℹ Iniciando execução...');
+        console.log('i Iniciando execucao...');
         console.log('   Macro:', currentMacro.name);
         console.log('   Device:', device);
-        console.log('   Instâncias:', count);
+        console.log('   Instancias:', count);
 
         document.getElementById("btn-execute").disabled = true;
 
@@ -377,7 +532,7 @@
         const statusSummary = document.getElementById("status-summary");
 
         logContainer.innerHTML = "";
-        statusSummary.innerHTML = `Executando ${count} instância(s)...`;
+        statusSummary.innerHTML = `Executando ${count} instancia(s)...`;
 
         function log(msg, type = "info") {
           const colors = {
@@ -393,56 +548,82 @@
           console.log(`[${type.toUpperCase()}] ${msg}`);
         }
 
-        log("ℹ Iniciando execução...", "info");
-        log(`ℹ Macro: ${currentMacro.name}`, "info");
+        if (!window.electronAPI?.executeMacro) {
+          const message =
+            "Bridge do Fastbot nao carregou (electronAPI.executeMacro indisponivel). Reinicie o aplicativo e tente novamente.";
+          log(message, "error");
+          statusSummary.textContent = "Execucao indisponivel: reinicie o app.";
+          showNotification(message, "error");
+          document.getElementById("btn-execute").disabled = false;
+          return;
+        }
+
+        log("i Iniciando execucao...", "info");
+        log(`i Macro: ${currentMacro.name}`, "info");
         log(` Device: ${device}`, "info");
-        log(` Sessão limpa: ${freshSession ? "sim" : "não"}`, "info");
+        log(` Sessao limpa: ${freshSession ? "sim" : "nao"}`, "info");
+        log(
+          ` Proxy: ${
+            toggleState.proxyEnabled
+              ? toggleState.proxyRotate
+                ? "rotativo"
+                : "fixo"
+              : "desativado"
+          }`,
+          "info"
+        );
+        log(` Modo retrato: ${toggleState.portraitMode ? "sim" : "nao"}`, "info");
 
         const positions = calculatePositions(count, device);
         const instances = [];
 
         for (let i = 0; i < count; i++) {
-          const proxyId = document.getElementById(`proxy-${i}`)?.value;
-          const passwordId = document.getElementById(`password-${i}`)?.value;
+          const proxy = getProxyForInstance(i);
           const pixId = document.getElementById(`pix-${i}`)?.value;
-          const proxy = proxyId ? proxies.find((p) => p.id === proxyId) : null;
-          const passwordEntry = passwordId ? passwords.find((p) => p.id === passwordId) : null;
           const pixEntry = pixId ? pixKeys.find((p) => p.id === pixId) : null;
+          const linkValue = toggleState.multiLinks
+            ? (document.getElementById(`link-${i}`)?.value.trim() || "")
+            : "";
+          const siteLabel = linkValue || currentMacro.name;
+          const passwordValue = generateStrongPassword();
 
           instances.push({
             index: i,
             position: positions[i],
             proxy,
-            password: passwordEntry,
             pix: pixEntry,
             email: generateRandomEmail(),
             username: generateRandomUsername(),
             phone: generateBrPhone(),
+            passwordValue,
+            link: linkValue || null,
             siteLabel,
-            notes,
+            notes: linkValue || null,
           });
         }
 
-        log(`ℹ ${instances.length} instâncias configuradas`, "info");
+        log(`i ${instances.length} instancias configuradas`, "info");
 
         const promises = instances.map(async (instance) => {
           log(` [Janela ${instance.index + 1}] Iniciando...`, "info");
 
           try {
-            const config = {
-              actions: JSON.parse(currentMacro.actions),
-              device: device,
-              position: instance.position,
-              proxy: instance.proxy,
-              password: instance.password?.password || null,
+          const config = {
+            actions: JSON.parse(currentMacro.actions),
+            device: device,
+            position: instance.position,
+            proxy: instance.proxy,
+              password: instance.passwordValue,
               pixKey: instance.pix?.key || null,
               email: instance.email,
               username: instance.username,
               phoneNumber: instance.phone,
+              link: instance.link || null,
               instanceIndex: instance.index,
               delayMin: currentMacro.delay_min || 500,
               delayMax: currentMacro.delay_max || 2000,
-              freshSession
+              freshSession,
+              options: { ...toggleState }
             };
 
             console.log(` Config para janela ${instance.index + 1}:`, config);
@@ -464,9 +645,9 @@
                     site_label: instance.siteLabel || currentMacro.name,
                     notes: instance.notes || null,
                     email: instance.email,
-                    password_id: instance.password?.id || null,
-                    password_label: instance.password?.label || null,
-                    password_value: instance.password?.password || null,
+                    password_id: null,
+                    password_label: 'auto',
+                    password_value: instance.passwordValue,
                     pix_id: instance.pix?.id || null,
                     pix_key: instance.pix?.key || null,
                     pix_type: instance.pix?.key_type || null,
@@ -502,9 +683,45 @@
 
         await Promise.all(promises);
 
-        statusSummary.innerHTML = `Execução finalizada!`;
-        log("ℹ Todas as instâncias finalizadas!", "success");
+        statusSummary.innerHTML = `Execucao finalizada!`;
+        log("i Todas as instancias finalizadas!", "success");
         document.getElementById("btn-execute").disabled = false;
+      }
+
+      async function loadLicenseMetadata() {
+        if (!currentUser) return;
+        try {
+          const { data, error } = await supabaseClient
+            .from("users")
+            .select("access_expires_at")
+            .eq("id", currentUser.id)
+            .single();
+
+          if (error) throw error;
+          licenseMetadata = data || null;
+        } catch (metaError) {
+          console.error("Erro ao buscar licenca:", metaError);
+          licenseMetadata = null;
+        } finally {
+          updateWorkspaceHeader();
+        }
+      }
+
+      function updateWorkspaceHeader() {
+        const chip = document.getElementById("user-chip");
+        if (chip && currentUser) {
+          chip.textContent = `${currentUser.email} - ${currentUser.role}`;
+        }
+
+        const licenseLabel = document.getElementById("license-expiration");
+        if (!licenseLabel) return;
+
+        if (licenseMetadata?.access_expires_at) {
+          const expires = new Date(licenseMetadata.access_expires_at);
+          licenseLabel.textContent = `Expiracao da licenca: ${expires.toLocaleDateString()} ${expires.toLocaleTimeString()}`;
+        } else {
+          licenseLabel.textContent = "Expiracao da licenca: em validacao com suporte";
+        }
       }
 
       function calculatePositions(count, device) {
@@ -560,6 +777,15 @@
         const chars = "abcdefghijklmnopqrstuvwxyz";
         let result = "";
         for (let i = 0; i < 12; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      }
+
+      function generateStrongPassword(length = 12) {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+        let result = "";
+        for (let i = 0; i < length; i++) {
           result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return result;

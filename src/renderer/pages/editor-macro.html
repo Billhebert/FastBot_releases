@@ -36,6 +36,41 @@
         background: #d1ecf1;
         border-left-color: #0c5460;
       }
+      .command-builder {
+        margin-top: 24px;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px dashed #c5d7ff;
+        background: #f5f8ff;
+      }
+      .command-builder h4 {
+        margin-bottom: 6px;
+        color: #1b2a37;
+      }
+      .command-builder p {
+        font-size: 12px;
+        color: #415067;
+        margin-bottom: 10px;
+      }
+      .command-builder textarea {
+        width: 100%;
+        min-height: 140px;
+        border-radius: 8px;
+        border: 1px solid #c7d3e3;
+        padding: 10px;
+        resize: vertical;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+      }
+      .command-builder .command-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+      }
+      .command-builder small {
+        display: block;
+        margin-top: 6px;
+        color: #6c7d95;
+      }
       .action-type {
         font-weight: bold;
         color: #2c3e50;
@@ -291,6 +326,32 @@
         <div class="actions-list">
           <h3>Acoes do Macro</h3>
           <div id="actions-container"></div>
+
+          <div class="command-builder">
+            <h4>Adicionar por comandos</h4>
+            <p>
+              Escreva um comando por linha. Exemplos: <br />
+              <code>login</code> (clique)<br />
+              <code>login:escrever:teste@email.com</code><br />
+              <code>esperar:2000</code>
+            </p>
+            <textarea id="text-command-input" placeholder="login&#10;login:escrever:minha-conta&#10;esperar:1500"></textarea>
+            <div class="variable-buttons" style="margin-top:8px;">
+              <button class="var-btn" type="button" onclick="insertCommandVariable('{{email}}')">+ {{email}}</button>
+              <button class="var-btn" type="button" onclick="insertCommandVariable('{{password}}')">+ {{password}}</button>
+              <button class="var-btn" type="button" onclick="insertCommandVariable('{{pix}}')">+ {{pix}}</button>
+              <button class="var-btn" type="button" onclick="insertCommandVariable('{{username}}')">+ {{username}}</button>
+              <button class="var-btn" type="button" onclick="insertCommandVariable('{{phone}}')">+ {{phone}}</button>
+            </div>
+            <small>
+              Palavras-chave suportadas: clicar/click, escrever/digitar, esperar/wait, abrir/navegar (URL).
+              Use <code>login#2</code> para escolher a 2ª ocorrencia de um texto e insira variaveis como {{email}} ou {{pix}} diretamente nos comandos.
+            </small>
+            <div class="command-actions">
+              <button class="btn-primary" type="button" onclick="applyTextCommands()">Adicionar acoes</button>
+              <button class="btn-ghost" type="button" onclick="clearTextCommands()">Limpar</button>
+            </div>
+          </div>
         </div>
 
         <div class="editor-panel">
@@ -307,11 +368,11 @@
     <div id="add-action-modal" class="add-action-modal">
       <div class="add-action-content">
         <h2>Selecione o tipo de acao</h2>
-        <div class="action-type-grid">
-          <div class="action-type-btn type-action" onclick="addAction('type')">
-            <strong>⌨️ TYPE</strong>
-            <small>Digita sem seletor<br />(use coordenadas!)</small>
-          </div>
+          <div class="action-type-grid">
+            <div class="action-type-btn type-action" onclick="addAction('type')">
+              <strong> TYPE</strong>
+              <small>Digita sem seletor<br />(use coordenadas!)</small>
+            </div>
           <div class="action-type-btn" onclick="addAction('click')">
             <strong>Click</strong>
             <small>Clicar em elemento</small>
@@ -340,11 +401,15 @@
             <strong>Loop</strong>
             <small>Repetir acoes</small>
           </div>
-          <div class="action-type-btn" onclick="addAction('condition')">
-            <strong>Condition</strong>
-            <small>If/Else</small>
+            <div class="action-type-btn" onclick="addAction('condition')">
+              <strong>Condition</strong>
+              <small>If/Else</small>
+            </div>
+            <div class="action-type-btn" onclick="addAction('close_popups')">
+              <strong>Fechar Pop-ups</strong>
+              <small>Aciona o limpador automático</small>
+            </div>
           </div>
-        </div>
         <button
           onclick="hideAddActionModal()"
           style="margin-top: 20px; background: #6c757d; width: 100%"
@@ -365,16 +430,289 @@
       let actions = [];
       let selectedIndex = null;
       let currentUser = null;
+      const COMMAND_ALIAS = {
+        click: ["click", "clicar", "botao", "pressionar", "tap"],
+        input: ["escrever", "digitar", "input", "texto"],
+        wait: ["esperar", "wait", "pausar", "aguardar"],
+        navigate: ["abrir", "navegar", "ir", "url"],
+        closepopups: [
+          "fechar popups",
+          "fechar popup",
+          "fechar anuncios",
+          "fechar anuncio",
+          "fechar propaganda",
+          "fechar pop-up",
+          "close popups",
+          "close popup",
+          "limpar popups",
+          "fechar janela"
+        ],
+      };
+
+      function looksLikeSelector(value) {
+        if (!value) return false;
+        const trimmed = value.trim();
+        if (!trimmed) return false;
+        if (/^selector\s*=/.test(trimmed) || /^css\s*=/.test(trimmed)) return true;
+        if (trimmed.startsWith("#") || trimmed.startsWith(".") || trimmed.startsWith("[") || trimmed.startsWith(":")) return true;
+        if (/[>,]/.test(trimmed)) return true;
+        return false;
+      }
+
+      function normalizeSelectorValue(value) {
+        if (!value) return "";
+        let trimmed = value.trim();
+        if (/^selector\s*=/.test(trimmed)) {
+          trimmed = trimmed.substring(trimmed.indexOf("=") + 1).trim();
+        } else if (/^css\s*=/.test(trimmed)) {
+          trimmed = trimmed.substring(trimmed.indexOf("=") + 1).trim();
+        }
+        while (
+          trimmed.length > 1 &&
+          (trimmed.startsWith('"') || trimmed.startsWith("'"))
+        ) {
+          trimmed = trimmed.substring(1);
+        }
+        while (
+          trimmed.length > 1 &&
+          (trimmed.endsWith('"') || trimmed.endsWith("'"))
+        ) {
+          trimmed = trimmed.substring(0, trimmed.length - 1);
+        }
+        return trimmed;
+      }
 
       async function init() {
         currentUser = await requirePagePermission("macros");
         if (!currentUser) return;
-        document.getElementById("menu-container").innerHTML = createMenu();
+        document.getElementById("menu-container").innerHTML = createMenu(currentUser);
         await loadMacro();
       }
 
       function goBack() {
         window.location.href = "macros.html";
+      }
+
+      function clearTextCommands() {
+        const textarea = document.getElementById("text-command-input");
+        if (textarea) {
+          textarea.value = "";
+        }
+      }
+
+      function applyTextCommands() {
+        const textarea = document.getElementById("text-command-input");
+        if (!textarea) return;
+        const lines = textarea.value
+          .split(/\n/)
+          .map((line) => line.trim())
+          .filter((line) => line.length);
+
+        if (!lines.length) {
+          showNotification("Nenhum comando informado", "warning");
+          return;
+        }
+
+        const created = [];
+        const errors = [];
+
+        lines.forEach((line, index) => {
+          const result = buildActionFromCommand(line);
+          if (result?.action) {
+            created.push(result.action);
+          } else if (result?.error) {
+            errors.push(`Linha ${index + 1}: ${result.error}`);
+          }
+        });
+
+        if (!created.length) {
+          showNotification("Nenhum comando valido encontrado", "warning");
+          console.warn("Comandos ignorados:", errors);
+          return;
+        }
+
+        actions.push(...created);
+        renderActionsList();
+        renderEditor();
+        showNotification(
+          `${created.length} acao(oes) adicionadas via comandos`,
+          "success"
+        );
+
+        if (errors.length) {
+          console.warn("Comandos com erro:", errors);
+          showNotification(
+            `${errors.length} linha(s) foram ignoradas. Ver console para detalhes.`,
+            "warning"
+          );
+        } else {
+          textarea.value = "";
+        }
+      }
+
+      function buildActionFromCommand(line) {
+        const original = line.trim();
+        if (!original) {
+          return { error: "Linha vazia" };
+        }
+
+        const segments = original.split(":");
+        const [firstRaw = "", secondRaw = "", ...restRaw] = segments;
+        const first = firstRaw.trim();
+        const second = secondRaw.trim();
+        const remainder = restRaw.map((part) => part.trim()).join(":").trim();
+        const firstLower = first.toLowerCase();
+
+        if (isAlias(firstLower, "wait") && segments.length >= 2) {
+          const durationValue = [secondRaw, ...restRaw].join(":").trim();
+          const duration =
+            parseInt(durationValue || "1000", 10) || 1000;
+          return {
+            action: {
+              type: "wait",
+              duration,
+              commandHint: original,
+            },
+          };
+        }
+
+        if (isAlias(firstLower, "navigate") && segments.length >= 2) {
+          const urlValue = [secondRaw, ...restRaw].join(":").trim();
+          if (!urlValue) {
+            return { error: "Informe uma URL apos 'abrir:'" };
+          }
+          return {
+            action: {
+              type: "navigate",
+              url: urlValue,
+              commandHint: original,
+            },
+          };
+        }
+
+        if (isAlias(firstLower, "closepopups")) {
+          const selectorValue = [secondRaw, ...restRaw].join(":").trim();
+          const selectorList = selectorValue
+            ? selectorValue
+                .split(/[\n,|]/)
+                .map((item) => normalizeSelectorValue(item))
+                .filter(Boolean)
+            : [];
+          return {
+            action: {
+              type: "close_popups",
+              customSelectors: selectorList,
+              commandHint: original,
+            },
+          };
+        }
+
+        const selectorTarget = looksLikeSelector(first) ? normalizeSelectorValue(first) : "";
+        const { text: targetText, matchIndex } = selectorTarget
+          ? { text: "", matchIndex: 1 }
+          : parseTargetToken(first);
+
+        if (!selectorTarget && !targetText) {
+          return { error: "Informe o alvo, ex: login ou um seletor CSS" };
+        }
+
+        let actionKind = "click";
+        if (second) {
+          const alias = matchCommandAlias(second);
+          if (alias) {
+            actionKind = alias;
+          }
+        }
+
+        const payload = remainder;
+
+        switch (actionKind) {
+          case "click":
+            return {
+              action: {
+                type: "click",
+                selector: selectorTarget,
+                x: 0,
+                y: 0,
+                textMatch: selectorTarget ? "" : targetText,
+                matchIndex,
+                commandHint: original,
+              },
+            };
+          case "input":
+            if (!payload) {
+              return {
+                error: "Use 'alvo:escrever:valor' para informar o texto",
+              };
+            }
+            return {
+              action: {
+                type: "input",
+                selector: selectorTarget,
+                value: payload,
+                textMatch: selectorTarget ? "" : targetText,
+                matchIndex,
+                commandHint: original,
+              },
+            };
+          case "wait": {
+            const duration =
+              parseInt(payload || second || "1000", 10) || 1000;
+            return {
+              action: {
+                type: "wait",
+                duration,
+                commandHint: original,
+              },
+            };
+          }
+          case "navigate": {
+            const urlValue = payload || second;
+            if (!urlValue) {
+              return {
+                error: "Use 'abrir:https://site.com' para navegar",
+              };
+            }
+            return {
+              action: {
+                type: "navigate",
+                url: urlValue,
+                commandHint: original,
+              },
+            };
+          }
+          default:
+            return {
+              error: `Acao desconhecida: ${second || "padrao"}`,
+            };
+        }
+      }
+
+      function matchCommandAlias(token) {
+        if (!token) return null;
+        const normalized = token.toLowerCase();
+        return (
+          Object.entries(COMMAND_ALIAS).find(([, list]) =>
+            list.includes(normalized)
+          )?.[0] || null
+        );
+      }
+
+      function parseTargetToken(raw) {
+        const value = (raw || "").trim();
+        if (!value) {
+          return { text: "", matchIndex: 1 };
+        }
+        const match = value.match(/^(.*?)(?:\s*#(\d+))?$/);
+        const text = (match?.[1] || value).trim();
+        const index = match?.[2] ? Math.max(1, parseInt(match[2], 10) || 1) : 1;
+        return { text, matchIndex: index };
+      }
+
+      function isAlias(token, type) {
+        if (!token) return false;
+        const normalized = token.toLowerCase();
+        return COMMAND_ALIAS[type]?.includes(normalized);
       }
 
       function showAddActionModal() {
@@ -437,10 +775,14 @@
             newAction.selector = "";
             newAction.x = 0;
             newAction.y = 0;
+            newAction.textMatch = "";
+            newAction.matchIndex = 1;
             break;
           case "input":
             newAction.selector = "";
             newAction.value = "";
+            newAction.textMatch = "";
+            newAction.matchIndex = 1;
             break;
           case "navigate":
             newAction.url = "";
@@ -464,6 +806,11 @@
             newAction.selector = "";
             newAction.then = [];
             newAction.else = [];
+            break;
+          case "close_popups":
+            newAction.label = "Fechar pop-ups";
+            newAction.customSelectors = [];
+            newAction.selector = "";
             break;
         }
 
@@ -492,9 +839,9 @@
               case "type":
                 let typeDetail = "";
                 if (action.click !== false) {
-                  typeDetail = `(${action.x}, ${action.y}) → `;
+                  typeDetail = `(${action.x}, ${action.y})  `;
                 } else {
-                  typeDetail = "(sem clicar) → ";
+                  typeDetail = "(sem clicar)  ";
                 }
                 typeDetail += `"${(action.value || "").substring(0, 25)}..."`;
                 if (action.clear === false) {
@@ -504,13 +851,35 @@
                 indicators = '<span class="type-indicator">TYPE</span>';
                 break;
               case "click":
-                detail = action.selector || `(${action.x}, ${action.y})`;
+                if (action.textMatch) {
+                  const idx =
+                    parseInt(action.matchIndex, 10) > 1
+                      ? ` [#${parseInt(action.matchIndex, 10)}]`
+                      : "";
+                  detail = `Texto: "${action.textMatch}"${idx}`;
+                  indicators += '<span class="type-indicator">AUTO</span>';
+                } else if (action.selector) {
+                  detail = action.selector;
+                } else {
+                  detail = `(${action.x}, ${action.y})`;
+                }
                 break;
               case "input":
-                detail = `${action.selector} = ${(action.value || "").substring(
-                  0,
-                  30
-                )}`;
+                if (action.textMatch) {
+                  const idx =
+                    parseInt(action.matchIndex, 10) > 1
+                      ? ` [#${parseInt(action.matchIndex, 10)}]`
+                      : "";
+                  detail = `Texto: "${action.textMatch}"${idx} = ${(action.value || "")
+                    .substring(0, 30)
+                    }`;
+                  indicators += '<span class="type-indicator">AUTO</span>';
+                } else {
+                  detail = `${action.selector} = ${(action.value || "").substring(
+                    0,
+                    30
+                  )}`;
+                }
                 break;
               case "navigate":
                 detail = action.url || "";
@@ -532,6 +901,16 @@
               case "wait":
                 detail = `${action.duration}ms`;
                 break;
+          case "close_popups":
+            detail = "Fechar pop-ups/banners";
+            if (action.customSelectors?.length) {
+              detail += ` (${action.customSelectors.length} seletor${action.customSelectors.length > 1 ? "es" : ""})`;
+            }
+            if (action.selector) {
+              detail += ` [${action.selector}]`;
+            }
+            indicators = '<span class="type-indicator">ADS</span>';
+            break;
               default:
                 detail = JSON.stringify(action).substring(0, 40);
             }
@@ -546,8 +925,8 @@
                         <div class="action-detail">${detail}</div>
                         <div class="action-controls">
                             <div>
-                                <button class="btn-move" onclick="moveAction(${index}, -1); event.stopPropagation();">▲</button>
-                                <button class="btn-move" onclick="moveAction(${index}, 1); event.stopPropagation();">▼</button>
+                                <button class="btn-move" onclick="moveAction(${index}, -1); event.stopPropagation();"></button>
+                                <button class="btn-move" onclick="moveAction(${index}, 1); event.stopPropagation();"></button>
                             </div>
                             <button class="btn-move" style="background: #dc3545;" onclick="deleteActionConfirm(${index}); event.stopPropagation();">Excluir</button>
                         </div>
@@ -579,7 +958,7 @@
           case "type":
             html = `
                         <div class="help-text">
-                            <strong>⌨️ TYPE - Digitar com controle total</strong>
+                            <strong> TYPE - Digitar com controle total</strong>
                             Digita nas coordenadas X,Y sem precisar de seletor CSS. Configure se quer clicar antes, limpar campo, e velocidade de digitacao.
                         </div>
                         
@@ -679,6 +1058,20 @@
                             }" placeholder="#id ou .class">
                         </div>
                         <div class="form-field">
+                            <label>Texto alvo (busca automatica)</label>
+                            <input type="text" id="edit-textmatch" value="${
+                              action.textMatch || ""
+                            }" placeholder="Ex: login, enviar, continuar">
+                            <small style="color:#666;">Quando preenchido, o seletor e as coordenadas se tornam opcionais.</small>
+                        </div>
+                        <div class="form-field">
+                            <label>Ocorrencia do texto</label>
+                            <input type="number" id="edit-matchindex" value="${
+                              action.matchIndex || 1
+                            }" min="1">
+                            <small style="color:#666;">Use quando existem elementos repetidos com o mesmo texto. 1 = primeiro, 2 = segundo, etc. Tambem funciona nos comandos em texto usando login#2.</small>
+                        </div>
+                        <div class="form-field">
                             <label>Posicao X:</label>
                             <input type="number" id="edit-x" value="${
                               action.x || 0
@@ -700,6 +1093,20 @@
                             <input type="text" id="edit-selector" value="${
                               action.selector || ""
                             }" placeholder="#id ou .class">
+                        </div>
+                        <div class="form-field">
+                            <label>Texto alvo (busca automatica)</label>
+                            <input type="text" id="edit-textmatch" value="${
+                              action.textMatch || ""
+                            }" placeholder="Ex: email, senha, usuario">
+                            <small style="color:#666;">O Fastbot tenta localizar inputs pelo texto do label, placeholder, aria-label ou nome.</small>
+                        </div>
+                        <div class="form-field">
+                            <label>Ocorrencia do texto</label>
+                            <input type="number" id="edit-matchindex" value="${
+                              action.matchIndex || 1
+                            }" min="1">
+                            <small style="color:#666;">Quando existem dois campos com o mesmo nome, defina qual usar (1 = primeiro, 2 = segundo, ...). Nos comandos, escreva "email#2:escrever:valor".</small>
                         </div>
                         <div class="form-field">
                             <label>Valor:</label>
@@ -846,6 +1253,24 @@
                         </div>
                     `;
             break;
+          case "close_popups":
+            html = `
+                        <p style="color:#ddd; line-height:1.5;">
+                          Esta acao dispara o limpador automatico de anuncios.
+                          O Fastbot tenta clicar em todos os botoes de "X"/fechar e ocultar pop-ups conhecidos.
+                        </p>
+                        <div class="form-field">
+                            <label>Seletor opcional (CSS):</label>
+                            <input type="text" id="edit-selector" value="${action.selector || ""}" placeholder="Ex: #app .close-btn">
+                            <small style="color:#888;">Clique direto neste seletor antes dos demais.</small>
+                        </div>
+                        <div class="form-field">
+                            <label>Seletores personalizados (um por linha):</label>
+                            <textarea id="edit-custom-selectors" placeholder="#app .close-btn">${(action.customSelectors || []).join("\n")}</textarea>
+                            <small style="color:#888;">Opcional. Informe seletores CSS especificos (um por linha) para clicar antes do limpador automatico.</small>
+                        </div>
+                    `;
+            break;
 
           default:
             html = `
@@ -891,6 +1316,19 @@
           start + variable.length;
       }
 
+      function insertCommandVariable(variable) {
+        const textarea = document.getElementById("text-command-input");
+        if (!textarea) return;
+        const start = textarea.selectionStart || 0;
+        const end = textarea.selectionEnd || 0;
+        const text = textarea.value;
+        textarea.value =
+          text.substring(0, start) + variable + text.substring(end);
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd =
+          start + variable.length;
+      }
+
       function saveCurrentAction() {
         if (selectedIndex === null) return;
 
@@ -918,18 +1356,40 @@
                 speedValue === "null" ? null : parseInt(speedValue);
               break;
 
-            case "click":
-              action.selector = document.getElementById("edit-selector").value;
-              action.x =
-                parseInt(document.getElementById("edit-x").value, 10) || 0;
-              action.y =
-                parseInt(document.getElementById("edit-y").value, 10) || 0;
-              break;
+          case "click":
+            action.selector = normalizeSelectorValue(
+              document.getElementById("edit-selector").value
+            );
+            action.x =
+              parseInt(document.getElementById("edit-x").value, 10) || 0;
+            action.y =
+              parseInt(document.getElementById("edit-y").value, 10) || 0;
+            action.textMatch =
+              document.getElementById("edit-textmatch")?.value.trim() || "";
+            action.matchIndex = Math.max(
+              1,
+              parseInt(
+                document.getElementById("edit-matchindex")?.value,
+                10
+              ) || 1
+            );
+            break;
 
-            case "input":
-              action.selector = document.getElementById("edit-selector").value;
-              action.value = document.getElementById("edit-value").value;
-              break;
+          case "input":
+            action.selector = normalizeSelectorValue(
+              document.getElementById("edit-selector").value
+            );
+            action.value = document.getElementById("edit-value").value;
+            action.textMatch =
+              document.getElementById("edit-textmatch")?.value.trim() || "";
+            action.matchIndex = Math.max(
+              1,
+              parseInt(
+                document.getElementById("edit-matchindex")?.value,
+                10
+              ) || 1
+            );
+            break;
 
             case "navigate":
               action.url = document.getElementById("edit-url").value;
@@ -962,16 +1422,31 @@
               );
               break;
 
-            case "condition":
-              action.condition =
-                document.getElementById("edit-condition").value;
-              action.selector = document.getElementById("edit-selector").value;
+          case "condition":
+            action.condition =
+              document.getElementById("edit-condition").value;
+            action.selector = normalizeSelectorValue(
+              document.getElementById("edit-selector").value
+            );
               action.then = JSON.parse(
                 document.getElementById("edit-then").value || "[]"
               );
               action.else = JSON.parse(
                 document.getElementById("edit-else").value || "[]"
               );
+              break;
+            case "close_popups":
+              {
+                const rawSelectors =
+                  document.getElementById("edit-custom-selectors")?.value || "";
+                action.customSelectors = rawSelectors
+                  .split("\n")
+                  .map((line) => line.trim())
+                  .filter(Boolean);
+                action.selector = normalizeSelectorValue(
+                  document.getElementById("edit-selector")?.value || ""
+                );
+              }
               break;
 
             default:

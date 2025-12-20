@@ -1,4 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const path = require('path');
+
+const appVersion = (() => {
+  try {
+    const pkg = require(path.resolve(__dirname, '../../../package.json'));
+    return pkg.version || '0.0.0';
+  } catch (error) {
+    console.warn('Unable to load app version:', error.message);
+    return '0.0.0';
+  }
+})();
 
 contextBridge.exposeInMainWorld('electronAPI', {
   startRecording: (options) => ipcRenderer.invoke('start-recording', options),
@@ -20,3 +31,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     close: (id) => ipcRenderer.invoke('mobile-shell:close', id)
   }
 });
+
+contextBridge.exposeInMainWorld('fastbotVersion', appVersion);

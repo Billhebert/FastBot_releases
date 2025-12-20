@@ -1,6 +1,6 @@
 /**
  * SISTEMA DE AGENTES ROTATIVOS
- * Cada instÃ¢ncia usa um fingerprint Ãºnico para evitar detecÃ§Ã£o
+ * Cada instancia usa um fingerprint unico para evitar deteccao
  */
 
 const AGENTS = [
@@ -342,7 +342,7 @@ const AGENTS = [
     deviceModel: "CPH2573"
   },
   
-  // AGENTE 20 - Samsung Galaxy A54 (CanadÃ¡)
+  // AGENTE 20 - Samsung Galaxy A54 (Canada)
   {
     id: 20,
     name: "Mobile_GalaxyA54_CA",
@@ -378,7 +378,7 @@ const AGENTS = [
     deviceModel: "XT2301-4"
   },
   
-  // AGENTE 22 - iPhone 12 (JapÃ£o)
+  // AGENTE 22 - iPhone 12 (Japao)
   {
     id: 22,
     name: "Mobile_iPhone12_JP",
@@ -396,7 +396,7 @@ const AGENTS = [
     deviceModel: "iPhone13,2"
   },
   
-  // AGENTE 23 - Samsung Galaxy S23 (AustrÃ¡lia)
+  // AGENTE 23 - Samsung Galaxy S23 (Australia)
   {
     id: 23,
     name: "Mobile_GalaxyS23_AU",
@@ -434,14 +434,14 @@ const AGENTS = [
 ];
 
 /**
- * Pega agente por Ã­ndice de instÃ¢ncia e tipo de device
+ * Pega agente por indice de instancia e tipo de device
  */
 function getAgentByInstance(instanceIndex, deviceType = 'desktop') {
   // Filtrar agentes por tipo
   const agentsByType = AGENTS.filter(a => a.type === deviceType);
   
   if (agentsByType.length === 0) {
-    console.warn(`âš ï¸  Nenhum agente encontrado para tipo: ${deviceType}`);
+    console.warn(`  Nenhum agente encontrado para tipo: ${deviceType}`);
     return AGENTS[instanceIndex % AGENTS.length];
   }
   
@@ -462,12 +462,12 @@ function getAgentByInstance(instanceIndex, deviceType = 'desktop') {
 }
 
 /**
- * Gera script de fingerprint Ãºnico para cada agente
+ * Gera script de fingerprint unico para cada agente
  */
 function getAgentFingerprintScript(agent) {
   return `
     // ============================================
-    // FINGERPRINT ÃšNICO - ${agent.name}
+    // FINGERPRINT NICO - ${agent.name}
     // ============================================
     
     // User Agent
@@ -582,14 +582,14 @@ function getAgentFingerprintScript(agent) {
       })
     });
     
-    // Canvas Fingerprint - Adiciona ruÃ­do Ãºnico
+    // Canvas Fingerprint - Adiciona ruido unico
     const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
     HTMLCanvasElement.prototype.toDataURL = function(type) {
       if (type === 'image/png' && this.width > 0 && this.height > 0) {
         const context = this.getContext('2d');
         if (context) {
           const imageData = context.getImageData(0, 0, this.width, this.height);
-          const noise = ${agent.id}; // RuÃ­do Ãºnico por agente
+          const noise = ${agent.id}; // Ruido unico por agente
           
           for (let i = 0; i < imageData.data.length; i += 4) {
             imageData.data[i] = imageData.data[i] + (noise % 3) - 1;
@@ -603,7 +603,7 @@ function getAgentFingerprintScript(agent) {
       return originalToDataURL.apply(this, arguments);
     };
     
-    console.log('ðŸ¤– Agente ${agent.name} ativado!');
+    console.log(' Agente ${agent.name} ativado!');
   `;
 }
 
