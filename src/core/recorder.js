@@ -222,6 +222,50 @@ async function safeInjectScript(pageInstance) {
         }, 300);
       }, true);
 
+      // MODO ESPELHO - Gravacao de movimento de mouse
+      let mouseMoveTimeout;
+      let lastMouseX = 0;
+      let lastMouseY = 0;
+      let mouseMovements = [];
+      let isRecordingMovement = false;
+
+      document.addEventListener('mousemove', event => {
+        const currentX = event.clientX;
+        const currentY = event.clientY;
+
+        // So gravar se houve movimento significativo (>5px)
+        if (Math.abs(currentX - lastMouseX) > 5 || Math.abs(currentY - lastMouseY) > 5) {
+          lastMouseX = currentX;
+          lastMouseY = currentY;
+
+          // Acumular movimentos
+          mouseMovements.push({
+            x: currentX,
+            y: currentY,
+            timestamp: Date.now()
+          });
+
+          // Limpar timeout anterior
+          clearTimeout(mouseMoveTimeout);
+
+          // Aguardar 500ms de inatividade para gravar a sequencia completa
+          mouseMoveTimeout = setTimeout(() => {
+            if (mouseMovements.length > 0) {
+              window.__recordAction({
+                type: 'mouse_move',
+                movements: [...mouseMovements],
+                fromX: mouseMovements[0].x,
+                fromY: mouseMovements[0].y,
+                toX: mouseMovements[mouseMovements.length - 1].x,
+                toY: mouseMovements[mouseMovements.length - 1].y,
+                duration: mouseMovements[mouseMovements.length - 1].timestamp - mouseMovements[0].timestamp
+              });
+              mouseMovements = [];
+            }
+          }, 500);
+        }
+      }, true);
+
       function getSelector(element) {
         if (!element) return '';
 
