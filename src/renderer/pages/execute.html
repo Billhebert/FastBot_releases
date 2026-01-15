@@ -109,6 +109,14 @@
               <small class="helper-text">Valores aleatórios entre Min e Max serão usados para depósitos automáticos</small>
             </div>
 
+            <div class="form-group">
+              <label>Link de Indicação</label>
+              <select id="referral-link-select" style="width: 100%; padding: 10px; background: #1a1a1a; border: 1px solid #444; color: #fff; border-radius: 6px;">
+                <option value="">Sem link de indicação</option>
+              </select>
+              <small class="helper-text">Selecione um link de indicação para usar ao criar as contas</small>
+            </div>
+
             <div class="toggle-inline">
               <label>
                 <span>Registrar automaticamente cada cadastro concluido</span>
@@ -254,6 +262,7 @@
       let currentMacro = null;
       let proxies = [];
       let pixKeys = [];
+      let referralLinks = [];
       let currentUser = null;
       let licenseMetadata = null;
       const CURRENT_APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
@@ -280,6 +289,7 @@
         await loadMacros();
         await loadProxies();
         await loadPixKeys();
+        await loadReferralLinks();
         await loadLicenseMetadata();
       }
 
@@ -354,6 +364,35 @@
           .select("*")
           .eq("user_id", currentUser.id);
         pixKeys = data || [];
+      }
+
+      async function loadReferralLinks() {
+        try {
+          const { data } = await supabaseClient
+            .from("referral_links")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .eq("is_active", true)
+            .order("priority", { ascending: false });
+
+          referralLinks = data || [];
+
+          // Atualizar o select
+          const select = document.getElementById("referral-link-select");
+          if (select) {
+            select.innerHTML = '<option value="">Sem link de indicação</option>';
+
+            referralLinks.forEach(link => {
+              const option = document.createElement("option");
+              option.value = link.id;
+              option.textContent = `${link.platform} - ${link.url.substring(0, 50)}${link.url.length > 50 ? '...' : ''}`;
+              select.appendChild(option);
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao carregar links de indicação:", error);
+          referralLinks = [];
+        }
       }
 
       async function updateMacroInfo() {
@@ -579,10 +618,17 @@
         const freshSession = document.getElementById("fresh-session").checked;
         const device = toggleState.portraitMode ? "mobile" : currentMacro.device_type;
 
+        // Link de indicação
+        const referralLinkId = document.getElementById("referral-link-select")?.value;
+        const selectedReferralLink = referralLinkId ? referralLinks.find(l => l.id === referralLinkId) : null;
+
         console.log('i Iniciando execucao...');
         console.log('   Macro:', currentMacro.name);
         console.log('   Device:', device);
         console.log('   Instancias:', count);
+        if (selectedReferralLink) {
+          console.log('   Link de indicacao:', selectedReferralLink.platform, '-', selectedReferralLink.url);
+        }
 
         document.getElementById("btn-execute").disabled = true;
 
@@ -631,6 +677,9 @@
           "info"
         );
         log(` Modo retrato: ${toggleState.portraitMode ? "sim" : "nao"}`, "info");
+        if (selectedReferralLink) {
+          log(` Link de indicacao: ${selectedReferralLink.platform}`, "info");
+        }
 
         const positions = calculatePositions(count, device);
         const instances = [];
@@ -639,9 +688,15 @@
           const proxy = getProxyForInstance(i);
           const pixId = document.getElementById(`pix-${i}`)?.value;
           const pixEntry = pixId ? pixKeys.find((p) => p.id === pixId) : null;
-          const linkValue = toggleState.multiLinks
-            ? (document.getElementById(`link-${i}`)?.value.trim() || "")
-            : "";
+
+          // Link de indicação ou link customizado
+          let linkValue = "";
+          if (toggleState.multiLinks) {
+            linkValue = document.getElementById(`link-${i}`)?.value.trim() || "";
+          } else if (selectedReferralLink) {
+            linkValue = selectedReferralLink.url;
+          }
+
           const siteLabel = linkValue || currentMacro.name;
           const passwordValue = generateStrongPassword();
 
@@ -657,6 +712,7 @@
             link: linkValue || null,
             siteLabel,
             notes: linkValue || null,
+            referralLink: selectedReferralLink || null,
           });
         }
 
@@ -691,6 +747,22 @@
             if (result.success) {
               log(`[Janela ${instance.index + 1}] Concluido`, "success");
               await trackMacroExecution(currentUser.id, currentMacro.id);
+
+              // Incrementar contador de uso do link de indicação
+              if (instance.referralLink) {
+                try {
+                  const { error: linkError } = await supabaseClient
+                    .from('referral_links')
+                    .update({ usage_count: (instance.referralLink.usage_count || 0) + 1 })
+                    .eq('id', instance.referralLink.id);
+
+                  if (linkError) {
+                    console.error('Erro ao atualizar contador do link:', linkError);
+                  }
+                } catch (linkUpdateError) {
+                  console.error('Erro ao incrementar uso do link:', linkUpdateError);
+                }
+              }
 
               if (shouldRegister && typeof saveRegistration === "function") {
                 try {

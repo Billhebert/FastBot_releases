@@ -103,6 +103,20 @@ CREATE TABLE IF NOT EXISTS dolphin_profiles (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 8) Tabela de links de indicação
+CREATE TABLE IF NOT EXISTS referral_links (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  platform       VARCHAR(100) NOT NULL,
+  url            TEXT NOT NULL,
+  description    TEXT,
+  priority       INTEGER DEFAULT 3,
+  is_active      BOOLEAN DEFAULT TRUE,
+  usage_count    INTEGER DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- =========================================================
 -- ÍNDICES PARA PERFORMANCE
 -- =========================================================
@@ -143,6 +157,12 @@ CREATE INDEX IF NOT EXISTS idx_dolphin_user ON dolphin_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_dolphin_id ON dolphin_profiles(dolphin_id);
 CREATE INDEX IF NOT EXISTS idx_dolphin_last_used ON dolphin_profiles(last_used_at DESC);
 
+-- Índices para referral_links
+CREATE INDEX IF NOT EXISTS idx_referral_user ON referral_links(user_id);
+CREATE INDEX IF NOT EXISTS idx_referral_active ON referral_links(is_active);
+CREATE INDEX IF NOT EXISTS idx_referral_priority ON referral_links(priority DESC);
+CREATE INDEX IF NOT EXISTS idx_referral_usage ON referral_links(usage_count DESC);
+
 -- =========================================================
 -- VERIFICAÇÃO
 -- =========================================================
@@ -181,9 +201,14 @@ UNION ALL
 SELECT
   'dolphin_profiles' as tabela,
   COUNT(*) as registros
-FROM dolphin_profiles;
+FROM dolphin_profiles
+UNION ALL
+SELECT
+  'referral_links' as tabela,
+  COUNT(*) as registros
+FROM referral_links;
 
 -- =========================================================
 -- SUCESSO!
--- Se você viu 7 tabelas com 0 registros acima, está tudo OK!
+-- Se você viu 8 tabelas com 0 registros acima, está tudo OK!
 -- =========================================================

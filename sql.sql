@@ -252,4 +252,27 @@ CREATE INDEX idx_dolphin_user        ON dolphin_profiles(user_id);
 CREATE INDEX idx_dolphin_id          ON dolphin_profiles(dolphin_id);
 CREATE INDEX idx_dolphin_last_used   ON dolphin_profiles(last_used_at DESC);
 
+-- ==============================================
+-- TABELA: referral_links
+-- Gerencia links de indicação para casas de apostas
+-- ==============================================
+CREATE TABLE IF NOT EXISTS referral_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  platform VARCHAR(100) NOT NULL,
+  url TEXT NOT NULL,
+  description TEXT,
+  priority INTEGER DEFAULT 3,
+  is_active BOOLEAN DEFAULT TRUE,
+  usage_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_referral_user       ON referral_links(user_id);
+CREATE INDEX idx_referral_active     ON referral_links(is_active);
+CREATE INDEX idx_referral_priority   ON referral_links(priority DESC);
+CREATE INDEX idx_referral_usage      ON referral_links(usage_count DESC);
+
 -- Ajuste as policies se estiver usando Row Level Security (por padrao cada tabela nova vem com RLS desligado; quando ligar, crie policies filtrando por user_id = auth.uid() ou similar).
