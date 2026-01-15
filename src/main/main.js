@@ -158,3 +158,179 @@ ipcMain.handle('window-control', (event, action) => {
       break;
   }
 });
+
+// ============================================
+// PIX GENERATION HANDLERS
+// ============================================
+
+ipcMain.handle('generate-pix', async (event, config) => {
+  console.log('========================================');
+  console.log(' main.js: GENERATE PIX');
+  console.log(' Config:', config);
+  console.log('========================================');
+
+  try {
+    const PixGenerator = require('../core/pix-generator.js');
+
+    const { sms24hApiKey, mpAccessToken, keyType, quantity, provider } = config;
+
+    if (!sms24hApiKey || !mpAccessToken) {
+      throw new Error('API keys nao configuradas. Configure em Settings.');
+    }
+
+    const generator = new PixGenerator(sms24hApiKey, mpAccessToken);
+
+    if (quantity > 1) {
+      // Geracao em lote
+      const results = await generator.generateBulkPixKeys(quantity, keyType);
+      return {
+        success: true,
+        results,
+        message: `${results.length} chaves PIX geradas com sucesso`
+      };
+    } else {
+      // Geracao unica
+      const result = await generator.generatePixKey({}, keyType);
+      return result;
+    }
+  } catch (error) {
+    console.error(' Erro ao gerar PIX:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+// ============================================
+// DOLPHIN ANTY HANDLERS
+// ============================================
+
+ipcMain.handle('dolphin-check-status', async (event) => {
+  console.log(' main.js: DOLPHIN CHECK STATUS');
+
+  try {
+    const DolphinClient = require('../core/dolphin-client.js');
+    const dolphin = new DolphinClient(3001, 'localhost');
+
+    const result = await dolphin.checkStatus();
+
+    if (result.running) {
+      // Verificar quantidade de perfis
+      const profilesResult = await dolphin.listProfiles(1, 10);
+      return {
+        success: true,
+        running: true,
+        profilesCount: profilesResult.total || 0
+      };
+    }
+
+    return { success: true, running: false };
+  } catch (error) {
+    console.error(' Erro ao verificar Dolphin:', error);
+    return {
+      success: false,
+      running: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('dolphin-list-profiles', async (event, config) => {
+  console.log(' main.js: DOLPHIN LIST PROFILES');
+  console.log(' Config:', config);
+
+  try {
+    const DolphinClient = require('../core/dolphin-client.js');
+    const dolphin = new DolphinClient(3001, 'localhost');
+
+    const { page = 1, limit = 100 } = config || {};
+
+    const result = await dolphin.listProfiles(page, limit);
+
+    if (result.success) {
+      return {
+        success: true,
+        profiles: result.profiles,
+        total: result.total
+      };
+    }
+
+    throw new Error(result.error);
+  } catch (error) {
+    console.error(' Erro ao listar perfis:', error);
+    return {
+      success: false,
+      error: error.message,
+      profiles: []
+    };
+  }
+});
+
+ipcMain.handle('dolphin-start-profile', async (event, config) => {
+  console.log(' main.js: DOLPHIN START PROFILE');
+  console.log(' Config:', config);
+
+  try {
+    const DolphinClient = require('../core/dolphin-client.js');
+    const dolphin = new DolphinClient(3001, 'localhost');
+
+    const { profileId } = config;
+
+    if (!profileId) {
+      throw new Error('Profile ID nao fornecido');
+    }
+
+    const result = await dolphin.startProfile(profileId);
+
+    if (result.success) {
+      return {
+        success: true,
+        port: result.port,
+        wsEndpoint: result.wsEndpoint,
+        pid: result.pid
+      };
+    }
+
+    throw new Error(result.error);
+  } catch (error) {
+    console.error(' Erro ao iniciar perfil:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('dolphin-stop-profile', async (event, config) => {
+  console.log(' main.js: DOLPHIN STOP PROFILE');
+  console.log(' Config:', config);
+
+  try {
+    const DolphinClient = require('../core/dolphin-client.js');
+    const dolphin = new DolphinClient(3001, 'localhost');
+
+    const { profileId } = config;
+
+    if (!profileId) {
+      throw new Error('Profile ID nao fornecido');
+    }
+
+    const result = await dolphin.stopProfile(profileId);
+
+    if (result.success) {
+      return {
+        success: true,
+        message: 'Perfil parado com sucesso'
+      };
+    }
+
+    throw new Error(result.error);
+  } catch (error) {
+    console.error(' Erro ao parar perfil:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});

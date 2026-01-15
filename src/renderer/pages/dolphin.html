@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dolphin Anty - FastBot</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .dolphin-container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .status-panel {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .status-indicator {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      animation: pulse 2s infinite;
+    }
+
+    .status-online {
+      background: rgba(46, 204, 113, 0.2);
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+    }
+
+    .status-offline {
+      background: rgba(231, 76, 60, 0.2);
+      box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .status-text h2 {
+      color: #d4af37;
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .status-text p {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .status-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+      color: #fff;
+    }
+
+    .btn-start:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: #fff;
+    }
+
+    .btn-stop:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    }
+
+    .btn-refresh {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #fff;
+    }
+
+    .btn-refresh:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .profiles-panel {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 25px;
+    }
+
+    .profiles-panel h2 {
+      color: #d4af37;
+      font-size: 18px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+    }
+
+    .profile-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .profile-card:hover {
+      border-color: #d4af37;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+    }
+
+    .profile-card.active {
+      border-color: #2ecc71;
+      background: rgba(46, 204, 113, 0.05);
+    }
+
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .profile-name {
+      color: #d4af37;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .profile-id {
+      color: #666;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    .profile-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-active {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+    }
+
+    .badge-inactive {
+      background: rgba(149, 165, 166, 0.2);
+      color: #95a5a6;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .info-label {
+      color: #888;
+    }
+
+    .info-value {
+      color: #ccc;
+      font-weight: 500;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-profile {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+    }
+
+    .btn-launch {
+      background: rgba(52, 152, 219, 0.2);
+      color: #3498db;
+      border: 1px solid #3498db;
+    }
+
+    .btn-launch:hover {
+      background: rgba(52, 152, 219, 0.4);
+    }
+
+    .btn-close {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+    }
+
+    .btn-close:hover {
+      background: rgba(231, 76, 60, 0.4);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .empty-state svg {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="titlebar" id="titlebar"></header>
+
+      <div class="dolphin-container">
+        <h1 style="color: #d4af37; margin-bottom: 30px;">🐬 Dolphin Anty - Gerenciamento de Perfis</h1>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+          <div class="status-info">
+            <div class="status-indicator status-offline" id="status-indicator">
+              ⚠️
+            </div>
+            <div class="status-text">
+              <h2 id="status-title">Verificando conexão...</h2>
+              <p id="status-subtitle">Aguarde...</p>
+            </div>
+          </div>
+
+          <div class="status-actions">
+            <button class="btn btn-start" id="btn-start-api" style="display: none;">
+              ▶️ Iniciar API
+            </button>
+            <button class="btn btn-refresh" id="btn-refresh">
+              🔄 Atualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- Profiles Panel -->
+        <div class="profiles-panel">
+          <h2>Perfis Disponíveis (<span id="profiles-count">0</span>)</h2>
+
+          <div class="profiles-grid" id="profiles-grid">
+            <div class="empty-state">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3>Nenhum perfil encontrado</h3>
+              <p>Verifique se o Dolphin Anty está rodando</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="notifications.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="router.js"></script>
+  <script>
+    let dolphinStatus = {
+      online: false,
+      profiles: []
+    };
+
+    // Verificar status do Dolphin
+    async function checkDolphinStatus() {
+      try {
+        const result = await window.electron.ipcRenderer.invoke('dolphin-check-status');
+
+        if (result.success && result.running) {
+          updateStatus(true, result.profilesCount || 0);
+          return true;
+        } else {
+          updateStatus(false);
+          return false;
+        }
+      } catch (error) {
+        console.error('Erro ao verificar Dolphin:', error);
+        updateStatus(false);
+        return false;
+      }
+    }
+
+    // Atualizar status visual
+    function updateStatus(online, profilesCount = 0) {
+      const indicator = document.getElementById('status-indicator');
+      const title = document.getElementById('status-title');
+      const subtitle = document.getElementById('status-subtitle');
+
+      dolphinStatus.online = online;
+
+      if (online) {
+        indicator.className = 'status-indicator status-online';
+        indicator.textContent = '✓';
+        title.textContent = 'Dolphin Anty Online';
+        subtitle.textContent = `${profilesCount} perfis disponíveis`;
+        title.style.color = '#2ecc71';
+      } else {
+        indicator.className = 'status-indicator status-offline';
+        indicator.textContent = '✗';
+        title.textContent = 'Dolphin Anty Offline';
+        subtitle.textContent = 'Inicie o Dolphin Anty para começar';
+        title.style.color = '#e74c3c';
+      }
+    }
+
+    // Carregar perfis
+    async function loadProfiles() {
+      try {
+        const result = await window.electron.ipcRenderer.invoke('dolphin-list-profiles', {
+          page: 1,
+          limit: 100
+        });
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        dolphinStatus.profiles = result.profiles || [];
+        document.getElementById('profiles-count').textContent = dolphinStatus.profiles.length;
+
+        const grid = document.getElementById('profiles-grid');
+
+        if (dolphinStatus.profiles.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3>Nenhum perfil encontrado</h3>
+              <p>Crie perfis no Dolphin Anty primeiro</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = dolphinStatus.profiles.map(profile => `
+          <div class="profile-card ${profile.active ? 'active' : ''}" data-id="${profile.id}">
+            <div class="profile-header">
+              <div>
+                <div class="profile-name">${profile.name || 'Sem nome'}</div>
+                <div class="profile-id">${profile.id.substring(0, 8)}...</div>
+              </div>
+              <div class="profile-badge ${profile.active ? 'badge-active' : 'badge-inactive'}">
+                ${profile.active ? 'Ativo' : 'Inativo'}
+              </div>
+            </div>
+
+            <div class="profile-info">
+              <div class="info-row">
+                <span class="info-label">Tags:</span>
+                <span class="info-value">${profile.tags?.join(', ') || 'Nenhuma'}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Última uso:</span>
+                <span class="info-value">${profile.last_used ? new Date(profile.last_used).toLocaleDateString('pt-BR') : 'Nunca'}</span>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button class="btn-profile btn-launch" onclick="launchProfile('${profile.id}')">
+                🚀 Iniciar
+              </button>
+              <button class="btn-profile btn-close" onclick="stopProfile('${profile.id}')" ${!profile.active ? 'disabled' : ''}>
+                ⏹️ Parar
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('Erro ao carregar perfis:', error);
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    }
+
+    // Iniciar perfil
+    window.launchProfile = async (profileId) => {
+      try {
+        showNotification('🚀 Iniciando perfil...', 'info');
+
+        const result = await window.electron.ipcRenderer.invoke('dolphin-start-profile', {
+          profileId
+        });
+
+        if (result.success) {
+          showNotification(`✅ Perfil iniciado! Porta CDP: ${result.port}`, 'success');
+          await loadProfiles();
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error('Erro ao iniciar perfil:', error);
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    };
+
+    // Parar perfil
+    window.stopProfile = async (profileId) => {
+      try {
+        showNotification('⏹️ Parando perfil...', 'info');
+
+        const result = await window.electron.ipcRenderer.invoke('dolphin-stop-profile', {
+          profileId
+        });
+
+        if (result.success) {
+          showNotification('✅ Perfil parado', 'success');
+          await loadProfiles();
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.error('Erro ao parar perfil:', error);
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    };
+
+    // Atualizar
+    document.getElementById('btn-refresh').addEventListener('click', async () => {
+      showNotification('🔄 Atualizando...', 'info');
+
+      const online = await checkDolphinStatus();
+
+      if (online) {
+        await loadProfiles();
+        showNotification('✅ Atualizado com sucesso', 'success');
+      } else {
+        showNotification('❌ Dolphin Anty offline', 'error');
+      }
+    });
+
+    // Inicializar
+    async function init() {
+      const online = await checkDolphinStatus();
+
+      if (online) {
+        await loadProfiles();
+      }
+
+      // Atualizar a cada 30 segundos
+      setInterval(async () => {
+        const online = await checkDolphinStatus();
+        if (online) {
+          await loadProfiles();
+        }
+      }, 30000);
+    }
+
+    init();
+  </script>
+</body>
+</html>

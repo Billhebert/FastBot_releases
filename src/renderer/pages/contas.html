@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contas - FastBot</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .contas-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .contas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .contas-stats {
+      display: flex;
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 15px 25px;
+      text-align: center;
+    }
+
+    .stat-card .label {
+      color: #888;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-card .value {
+      color: #d4af37;
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    .contas-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-excluir-tudo {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: #fff;
+    }
+
+    .btn-excluir-tudo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    }
+
+    .btn-importar {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #fff;
+    }
+
+    .btn-importar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .contas-panel {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .contas-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .contas-table thead {
+      background: rgba(212, 175, 55, 0.1);
+    }
+
+    .contas-table th {
+      padding: 15px 12px;
+      text-align: left;
+      color: #d4af37;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid #444;
+      white-space: nowrap;
+    }
+
+    .contas-table td {
+      padding: 12px;
+      color: #ccc;
+      font-size: 13px;
+      border-bottom: 1px solid #333;
+    }
+
+    .contas-table tbody tr:hover {
+      background: rgba(212, 175, 55, 0.05);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .badge-ativa {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+    }
+
+    .badge-inativa {
+      background: rgba(149, 165, 166, 0.2);
+      color: #95a5a6;
+    }
+
+    .badge-bloqueada {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+    }
+
+    .btn-action {
+      padding: 6px 14px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-right: 5px;
+      border: none;
+    }
+
+    .btn-excluir {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+    }
+
+    .btn-excluir:hover {
+      background: rgba(231, 76, 60, 0.4);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .empty-state svg {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="titlebar" id="titlebar"></header>
+
+      <div class="contas-container">
+        <div class="contas-header">
+          <div class="contas-stats">
+            <div class="stat-card">
+              <div class="label">Total</div>
+              <div class="value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Ativas</div>
+              <div class="value" id="stat-ativas" style="color: #2ecc71;">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Bloqueadas</div>
+              <div class="value" id="stat-bloqueadas" style="color: #e74c3c;">0</div>
+            </div>
+          </div>
+
+          <div class="contas-actions">
+            <button class="btn btn-excluir-tudo" id="btn-excluir-tudo">
+              🗑️ Excluir Tudo
+            </button>
+            <button class="btn btn-importar" id="btn-importar">
+              📥 Importar Contas
+            </button>
+          </div>
+        </div>
+
+        <div class="contas-panel">
+          <table class="contas-table">
+            <thead>
+              <tr>
+                <th>Chave</th>
+                <th>Tipo</th>
+                <th>User</th>
+                <th>Senha Cadastro</th>
+                <th>Casa</th>
+                <th>Senha Saque</th>
+                <th>Data Criação</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="contas-tbody">
+              <tr>
+                <td colspan="9" class="empty-state">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <h3>Nenhuma conta cadastrada</h3>
+                  <p>As contas criadas pelos macros aparecerão aqui automaticamente</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="notifications.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="router.js"></script>
+  <script>
+    let currentUser = null;
+
+    // Carregar contas do banco
+    async function loadContas() {
+      try {
+        const { data, error } = await supabase
+          .from('registrations')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const tbody = document.getElementById('contas-tbody');
+
+        // Atualizar estatísticas
+        const total = data.length;
+        const ativas = data.filter(c => c.status === 'success').length;
+        const bloqueadas = data.filter(c => c.status === 'failed').length;
+
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-ativas').textContent = ativas;
+        document.getElementById('stat-bloqueadas').textContent = bloqueadas;
+
+        if (data.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="9" class="empty-state">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3>Nenhuma conta cadastrada</h3>
+                <p>As contas criadas pelos macros aparecerão aqui automaticamente</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = data.map(conta => {
+          const statusMap = {
+            'success': 'ativa',
+            'failed': 'bloqueada',
+            'pending': 'inativa'
+          };
+
+          const statusClass = statusMap[conta.status] || 'inativa';
+
+          return `
+            <tr>
+              <td><code style="color: #3498db;">${conta.pix_key || '-'}</code></td>
+              <td>${conta.pix_type || '-'}</td>
+              <td>${conta.email || '-'}</td>
+              <td><code style="color: #95a5a6;">${conta.password_value ? '●●●●●●' : '-'}</code></td>
+              <td>${conta.site_label || conta.macro_name || '-'}</td>
+              <td><code style="color: #95a5a6;">${conta.password_value ? '●●●●●●' : '-'}</code></td>
+              <td>${new Date(conta.created_at).toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}</td>
+              <td><span class="badge badge-${statusClass}">${statusClass}</span></td>
+              <td>
+                <button class="btn-action btn-excluir" onclick="deleteConta('${conta.id}')">
+                  Excluir
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Erro ao carregar contas:', error);
+        showNotification('Erro ao carregar contas', 'error');
+      }
+    }
+
+    // Deletar conta
+    window.deleteConta = async (contaId) => {
+      if (!confirm('Tem certeza que deseja deletar esta conta?')) return;
+
+      try {
+        const { error } = await supabase
+          .from('registrations')
+          .delete()
+          .eq('id', contaId);
+
+        if (error) throw error;
+
+        showNotification('🗑️ Conta deletada', 'success');
+        loadContas();
+      } catch (error) {
+        console.error('Erro ao deletar:', error);
+        showNotification('Erro ao deletar', 'error');
+      }
+    };
+
+    // Excluir tudo
+    document.getElementById('btn-excluir-tudo').addEventListener('click', async () => {
+      if (!confirm('⚠️ ATENÇÃO: Isso vai deletar TODAS as contas. Tem certeza?')) return;
+
+      try {
+        const { error } = await supabase
+          .from('registrations')
+          .delete()
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        showNotification('🗑️ Todas as contas foram deletadas', 'success');
+        loadContas();
+      } catch (error) {
+        console.error('Erro ao deletar:', error);
+        showNotification('Erro ao deletar', 'error');
+      }
+    });
+
+    // Importar contas
+    document.getElementById('btn-importar').addEventListener('click', () => {
+      showNotification('🚧 Funcionalidade em desenvolvimento', 'info');
+    });
+
+    // Carregar ao iniciar
+    async function init() {
+      currentUser = await getCurrentUser();
+      if (currentUser) {
+        loadContas();
+
+        // Atualizar a cada 30 segundos
+        setInterval(loadContas, 30000);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

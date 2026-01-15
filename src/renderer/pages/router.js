@@ -2,9 +2,9 @@
 
 const ROUTER_PERMISSIONS =
   window.APP_PERMISSIONS || {
-    dev: ["macros", "pix", "proxies", "passwords", "execute"],
-    creator: ["macros", "pix"],
-    consumer: ["proxies", "passwords", "pix", "execute"],
+    dev: ["macros", "pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas"],
+    creator: ["macros", "pix", "settings", "pix-generator"],
+    consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas"],
   };
 
 const APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
@@ -133,10 +133,15 @@ function createMenu(userOverride) {
 
   const navStructure = [
     { page: 'macros', label: user.role === 'dev' ? 'Criar macros' : 'Inicio' },
+    { page: 'execute', label: 'Executar' },
+    { page: 'contas', label: 'Contas' },
+    { page: 'passwords', label: 'Senhas' },
     { page: 'pix', label: 'Chaves PIX' },
-    { page: 'passwords', label: 'Contas' },
+    { page: 'pix-generator', label: 'Gerar PIX' },
     { page: 'proxies', label: 'Proxies' },
-    { page: 'execute', label: 'Jogar' }
+    { page: 'dolphin', label: 'Dolphin Anty' },
+    { page: 'telas', label: 'Layout de Telas' },
+    { page: 'settings', label: 'Configuracoes' }
   ];
 
   const userPermissions = ROUTER_PERMISSIONS[user.role] || [];

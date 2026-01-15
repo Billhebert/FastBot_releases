@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organização de Telas - FastBot</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .telas-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .config-panel {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .config-panel h2 {
+      color: #d4af37;
+      font-size: 18px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    .config-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .config-group label {
+      color: #d4af37;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .input-group input {
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #fff;
+      padding: 12px 15px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      width: 80px;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: #d4af37;
+    }
+
+    .input-group input[type="number"]::-webkit-inner-spin-button,
+    .input-group input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .btn-spinner {
+      background: #333;
+      border: 1px solid #444;
+      color: #fff;
+      width: 35px;
+      height: 35px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-spinner:hover {
+      background: #d4af37;
+      border-color: #d4af37;
+      color: #1a1a1a;
+    }
+
+    .preset-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-preset {
+      padding: 10px 20px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-preset:hover {
+      background: #444;
+      border-color: #d4af37;
+    }
+
+    .btn-preset.active {
+      background: #d4af37;
+      border-color: #d4af37;
+      color: #1a1a1a;
+    }
+
+    .preview-panel {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 30px;
+    }
+
+    .preview-panel h2 {
+      color: #d4af37;
+      font-size: 18px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preview-info {
+      color: #888;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .grid-preview {
+      background: #0d0d0d;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 400px;
+      display: grid;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .grid-cell {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      border: 2px solid #444;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #d4af37;
+      min-height: 100px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .grid-cell::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .grid-cell:hover {
+      border-color: #d4af37;
+      transform: scale(1.02);
+      box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3);
+    }
+
+    .grid-cell:hover::before {
+      opacity: 1;
+    }
+
+    .cell-number {
+      font-size: 24px;
+      z-index: 1;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-apply {
+      background: linear-gradient(135deg, #d4af37 0%, #c49a2a 100%);
+      color: #1a1a1a;
+    }
+
+    .btn-apply:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-reset {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: #fff;
+    }
+
+    .btn-reset:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    }
+
+    .info-box {
+      background: rgba(52, 152, 219, 0.1);
+      border: 1px solid rgba(52, 152, 219, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    .info-box p {
+      color: #3498db;
+      font-size: 13px;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .info-box strong {
+      color: #5dade2;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="titlebar" id="titlebar"></header>
+
+      <div class="telas-container">
+        <h1 style="color: #d4af37; margin-bottom: 30px;">🖥️ Organização de Telas</h1>
+
+        <!-- Configuration Panel -->
+        <div class="config-panel">
+          <h2>⚙️ Configuração do Grid</h2>
+
+          <div class="config-grid">
+            <!-- Rows Configuration -->
+            <div class="config-group">
+              <label>📐 Linhas (Rows)</label>
+              <div class="input-group">
+                <button class="btn-spinner" onclick="changeRows(-1)">−</button>
+                <input type="number" id="rows-input" value="2" min="1" max="6" readonly>
+                <button class="btn-spinner" onclick="changeRows(1)">+</button>
+              </div>
+            </div>
+
+            <!-- Columns Configuration -->
+            <div class="config-group">
+              <label>📏 Colunas (Columns)</label>
+              <div class="input-group">
+                <button class="btn-spinner" onclick="changeColumns(-1)">−</button>
+                <input type="number" id="columns-input" value="3" min="1" max="6" readonly>
+                <button class="btn-spinner" onclick="changeColumns(1)">+</button>
+              </div>
+            </div>
+
+            <!-- Gap Configuration -->
+            <div class="config-group">
+              <label>📊 Espaçamento (Gap)</label>
+              <div class="input-group">
+                <button class="btn-spinner" onclick="changeGap(-5)">−</button>
+                <input type="number" id="gap-input" value="10" min="0" max="50" step="5" readonly>
+                <button class="btn-spinner" onclick="changeGap(5)">+</button>
+                <span style="color: #888; font-size: 13px;">px</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preset Layouts -->
+          <div class="config-group">
+            <label>🎯 Layouts Predefinidos</label>
+            <div class="preset-buttons">
+              <button class="btn-preset" onclick="applyPreset(1, 1)">1×1</button>
+              <button class="btn-preset" onclick="applyPreset(1, 2)">1×2</button>
+              <button class="btn-preset" onclick="applyPreset(1, 3)">1×3</button>
+              <button class="btn-preset" onclick="applyPreset(2, 2)">2×2</button>
+              <button class="btn-preset active" onclick="applyPreset(2, 3)">2×3</button>
+              <button class="btn-preset" onclick="applyPreset(2, 4)">2×4</button>
+              <button class="btn-preset" onclick="applyPreset(3, 3)">3×3</button>
+              <button class="btn-preset" onclick="applyPreset(3, 4)">3×4</button>
+              <button class="btn-preset" onclick="applyPreset(4, 4)">4×4</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+          <h2>
+            👁️ Visualização
+            <span class="preview-info" id="preview-info">2 linhas × 3 colunas = 6 janelas</span>
+          </h2>
+
+          <div class="grid-preview" id="grid-preview"></div>
+
+          <div class="action-buttons">
+            <button class="btn btn-apply" onclick="applyLayout()">
+              ✓ Aplicar Layout
+            </button>
+            <button class="btn btn-reset" onclick="resetLayout()">
+              ↻ Resetar
+            </button>
+          </div>
+
+          <div class="info-box">
+            <p>
+              <strong>💡 Dica:</strong> Este layout será aplicado quando você executar múltiplas contas simultaneamente.
+              Cada janela do navegador será posicionada automaticamente seguindo o grid configurado.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="notifications.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="router.js"></script>
+
+  <script>
+    let currentUser = null;
+    let currentLayout = {
+      rows: 2,
+      columns: 3,
+      gap: 10
+    };
+
+    // Inicializar
+    async function init() {
+      currentUser = await requirePagePermission("telas");
+      if (!currentUser) return;
+
+      // Carregar layout salvo
+      loadSavedLayout();
+      updatePreview();
+    }
+
+    // Carregar layout salvo do localStorage
+    function loadSavedLayout() {
+      const saved = localStorage.getItem('fastbot_window_layout');
+      if (saved) {
+        try {
+          currentLayout = JSON.parse(saved);
+          document.getElementById('rows-input').value = currentLayout.rows;
+          document.getElementById('columns-input').value = currentLayout.columns;
+          document.getElementById('gap-input').value = currentLayout.gap;
+        } catch (e) {
+          console.error('Erro ao carregar layout:', e);
+        }
+      }
+    }
+
+    // Salvar layout no localStorage
+    function saveLayout() {
+      localStorage.setItem('fastbot_window_layout', JSON.stringify(currentLayout));
+    }
+
+    // Alterar linhas
+    function changeRows(delta) {
+      const input = document.getElementById('rows-input');
+      let newValue = parseInt(input.value) + delta;
+      newValue = Math.max(1, Math.min(6, newValue));
+      input.value = newValue;
+      currentLayout.rows = newValue;
+      updatePreview();
+      clearPresetSelection();
+    }
+
+    // Alterar colunas
+    function changeColumns(delta) {
+      const input = document.getElementById('columns-input');
+      let newValue = parseInt(input.value) + delta;
+      newValue = Math.max(1, Math.min(6, newValue));
+      input.value = newValue;
+      currentLayout.columns = newValue;
+      updatePreview();
+      clearPresetSelection();
+    }
+
+    // Alterar gap
+    function changeGap(delta) {
+      const input = document.getElementById('gap-input');
+      let newValue = parseInt(input.value) + delta;
+      newValue = Math.max(0, Math.min(50, newValue));
+      input.value = newValue;
+      currentLayout.gap = newValue;
+      updatePreview();
+    }
+
+    // Aplicar preset
+    function applyPreset(rows, columns) {
+      currentLayout.rows = rows;
+      currentLayout.columns = columns;
+      document.getElementById('rows-input').value = rows;
+      document.getElementById('columns-input').value = columns;
+
+      // Atualizar visual dos botões
+      document.querySelectorAll('.btn-preset').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      updatePreview();
+    }
+
+    // Limpar seleção de preset
+    function clearPresetSelection() {
+      document.querySelectorAll('.btn-preset').forEach(btn => {
+        btn.classList.remove('active');
+      });
+    }
+
+    // Atualizar preview
+    function updatePreview() {
+      const { rows, columns, gap } = currentLayout;
+      const gridPreview = document.getElementById('grid-preview');
+      const totalWindows = rows * columns;
+
+      // Atualizar info
+      document.getElementById('preview-info').textContent =
+        `${rows} linhas × ${columns} colunas = ${totalWindows} janelas`;
+
+      // Atualizar grid style
+      gridPreview.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+      gridPreview.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+      gridPreview.style.gap = `${gap}px`;
+
+      // Criar células
+      gridPreview.innerHTML = '';
+      for (let i = 1; i <= totalWindows; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.innerHTML = `<span class="cell-number">${i}</span>`;
+        gridPreview.appendChild(cell);
+      }
+    }
+
+    // Aplicar layout
+    async function applyLayout() {
+      try {
+        saveLayout();
+        showNotification('✅ Layout aplicado com sucesso!', 'success');
+
+        // Salvar no banco de dados também (opcional)
+        const { error } = await supabaseClient
+          .from('user_settings')
+          .upsert({
+            user_id: currentUser.id,
+            setting_key: 'window_layout',
+            setting_value: currentLayout
+          }, {
+            onConflict: 'user_id,setting_key'
+          });
+
+        if (error) {
+          console.error('Erro ao salvar no banco:', error);
+        }
+
+      } catch (error) {
+        console.error('Erro ao aplicar layout:', error);
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    }
+
+    // Resetar layout
+    function resetLayout() {
+      if (!confirm('Deseja resetar o layout para o padrão (2×3)?')) {
+        return;
+      }
+
+      currentLayout = {
+        rows: 2,
+        columns: 3,
+        gap: 10
+      };
+
+      document.getElementById('rows-input').value = 2;
+      document.getElementById('columns-input').value = 3;
+      document.getElementById('gap-input').value = 10;
+
+      updatePreview();
+      saveLayout();
+
+      // Marcar preset 2x3 como ativo
+      document.querySelectorAll('.btn-preset').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === '2×3') {
+          btn.classList.add('active');
+        }
+      });
+
+      showNotification('✅ Layout resetado para o padrão', 'success');
+    }
+
+    init();
+  </script>
+</body>
+</html>

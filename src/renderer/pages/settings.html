@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações - FastBot</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .settings-container {
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .settings-section {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .settings-section h2 {
+      color: #d4af37;
+      font-size: 18px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      color: #ccc;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    .form-group small {
+      color: #888;
+      font-size: 12px;
+      display: block;
+      margin-top: 5px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+      color: #000;
+    }
+
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-test {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #fff;
+    }
+
+    .btn-test:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .status-indicator {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .status-success {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+    }
+
+    .status-error {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+    }
+
+    .status-warning {
+      background: rgba(241, 196, 15, 0.2);
+      color: #f1c40f;
+    }
+
+    .info-box {
+      background: rgba(52, 152, 219, 0.1);
+      border-left: 3px solid #3498db;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .info-box p {
+      color: #ccc;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 5px 0;
+    }
+
+    .info-box a {
+      color: #3498db;
+      text-decoration: none;
+    }
+
+    .info-box a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="titlebar" id="titlebar"></header>
+
+      <div class="settings-container">
+        <h1 style="color: #d4af37; margin-bottom: 30px;">⚙️ Configurações de APIs</h1>
+
+        <!-- SMS24h Configuration -->
+        <div class="settings-section">
+          <h2>📱 SMS24h - Números Temporários</h2>
+
+          <div class="info-box">
+            <p>💡 <strong>Para que serve:</strong> Gerar chaves PIX automaticamente usando números temporários</p>
+            <p>🔗 Obter API Key: <a href="https://sms24h.com/" target="_blank">https://sms24h.com/</a></p>
+            <p>📖 Documentação: Acesse "API" → "Gerar API Key" no painel</p>
+          </div>
+
+          <div class="form-group">
+            <label for="sms24h-api-key">
+              API Key SMS24h
+              <span id="sms24h-status"></span>
+            </label>
+            <input
+              type="password"
+              id="sms24h-api-key"
+              placeholder="Cole sua API Key aqui..."
+              autocomplete="off"
+            />
+            <small>Mantenha em segredo. Nunca compartilhe sua API Key.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="sms24h-timeout">Timeout para receber SMS (segundos)</label>
+            <input
+              type="number"
+              id="sms24h-timeout"
+              value="300"
+              min="60"
+              max="600"
+            />
+            <small>Tempo máximo de espera para receber código SMS (padrão: 300s = 5 min)</small>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-test" id="btn-test-sms24h">🧪 Testar Conexão</button>
+            <button class="btn btn-save" id="btn-save-sms24h">💾 Salvar</button>
+          </div>
+        </div>
+
+        <!-- Mercado Pago Configuration -->
+        <div class="settings-section">
+          <h2>💳 Mercado Pago - Geração de PIX</h2>
+
+          <div class="info-box">
+            <p>💡 <strong>Para que serve:</strong> Criar contas e gerar chaves PIX automaticamente</p>
+            <p>🔗 Obter Access Token: <a href="https://www.mercadopago.com.br/developers" target="_blank">https://www.mercadopago.com.br/developers</a></p>
+            <p>📖 Documentação: Acesse "Suas aplicações" → "Criar aplicação" → "Credenciais de produção"</p>
+          </div>
+
+          <div class="form-group">
+            <label for="mp-access-token">
+              Access Token Mercado Pago
+              <span id="mp-status"></span>
+            </label>
+            <input
+              type="password"
+              id="mp-access-token"
+              placeholder="Cole seu Access Token aqui..."
+              autocomplete="off"
+            />
+            <small>Token de produção. Necessário para criar contas e chaves PIX.</small>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-test" id="btn-test-mp">🧪 Testar Conexão</button>
+            <button class="btn btn-save" id="btn-save-mp">💾 Salvar</button>
+          </div>
+        </div>
+
+        <!-- Dolphin Anty Configuration -->
+        <div class="settings-section">
+          <h2>🐬 Dolphin Anty - Perfis Isolados</h2>
+
+          <div class="info-box">
+            <p>💡 <strong>Para que serve:</strong> Usar perfis isolados do Dolphin Anty com o FastBot</p>
+            <p>🔗 Download: <a href="https://dolphin-anty.com/" target="_blank">https://dolphin-anty.com/</a></p>
+            <p>📖 Documentação: Instale o Dolphin, crie perfis e mantenha rodando em background</p>
+          </div>
+
+          <div class="form-group">
+            <label for="dolphin-host">
+              Host Dolphin Anty
+              <span id="dolphin-status"></span>
+            </label>
+            <input
+              type="text"
+              id="dolphin-host"
+              value="localhost"
+              placeholder="localhost ou IP"
+            />
+            <small>Endereço onde o Dolphin Anty está rodando (padrão: localhost)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="dolphin-port">Porta da API Local</label>
+            <input
+              type="number"
+              id="dolphin-port"
+              value="3001"
+              min="1"
+              max="65535"
+            />
+            <small>Porta da API local do Dolphin (padrão: 3001)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="dolphin-min-profiles">Mínimo de Perfis Necessários</label>
+            <input
+              type="number"
+              id="dolphin-min-profiles"
+              value="20"
+              min="1"
+              max="100"
+            />
+            <small>Alerta se tiver menos perfis que isso (recomendado: 20+)</small>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-test" id="btn-test-dolphin">🧪 Testar Conexão</button>
+            <button class="btn btn-save" id="btn-save-dolphin">💾 Salvar</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="notifications.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="router.js"></script>
+  <script>
+    // Carregar configurações salvas
+    async function loadSettings() {
+      const sms24hKey = localStorage.getItem('sms24h_api_key') || '';
+      const sms24hTimeout = localStorage.getItem('sms24h_timeout') || '300';
+      const mpToken = localStorage.getItem('mp_access_token') || '';
+      const dolphinHost = localStorage.getItem('dolphin_host') || 'localhost';
+      const dolphinPort = localStorage.getItem('dolphin_port') || '3001';
+      const dolphinMinProfiles = localStorage.getItem('dolphin_min_profiles') || '20';
+
+      document.getElementById('sms24h-api-key').value = sms24hKey;
+      document.getElementById('sms24h-timeout').value = sms24hTimeout;
+      document.getElementById('mp-access-token').value = mpToken;
+      document.getElementById('dolphin-host').value = dolphinHost;
+      document.getElementById('dolphin-port').value = dolphinPort;
+      document.getElementById('dolphin-min-profiles').value = dolphinMinProfiles;
+
+      // Verificar status
+      updateStatus('sms24h', sms24hKey ? 'warning' : 'error', sms24hKey ? 'Não testado' : 'Não configurado');
+      updateStatus('mp', mpToken ? 'warning' : 'error', mpToken ? 'Não testado' : 'Não configurado');
+      updateStatus('dolphin', dolphinHost && dolphinPort ? 'warning' : 'error', 'Não testado');
+    }
+
+    function updateStatus(service, status, message) {
+      const statusEl = document.getElementById(`${service}-status`);
+      statusEl.className = `status-indicator status-${status}`;
+      statusEl.textContent = message;
+    }
+
+    // Salvar SMS24h
+    document.getElementById('btn-save-sms24h').addEventListener('click', () => {
+      const apiKey = document.getElementById('sms24h-api-key').value.trim();
+      const timeout = document.getElementById('sms24h-timeout').value;
+
+      if (!apiKey) {
+        showNotification('Erro: API Key vazia', 'error');
+        return;
+      }
+
+      localStorage.setItem('sms24h_api_key', apiKey);
+      localStorage.setItem('sms24h_timeout', timeout);
+
+      updateStatus('sms24h', 'warning', 'Salvo - Não testado');
+      showNotification('✅ SMS24h configurado com sucesso', 'success');
+    });
+
+    // Testar SMS24h
+    document.getElementById('btn-test-sms24h').addEventListener('click', async () => {
+      const apiKey = document.getElementById('sms24h-api-key').value.trim();
+
+      if (!apiKey) {
+        showNotification('Erro: Configure a API Key primeiro', 'error');
+        return;
+      }
+
+      updateStatus('sms24h', 'warning', 'Testando...');
+      showNotification('🧪 Testando conexão SMS24h...', 'info');
+
+      try {
+        // Testar via backend (criar função helper se necessário)
+        const SMS24hClient = require('../../core/sms24h-client');
+        const client = new SMS24hClient(apiKey);
+        const result = await client.getBalance();
+
+        if (result.success) {
+          updateStatus('sms24h', 'success', `✓ OK - Saldo: R$ ${result.balance}`);
+          showNotification(`✅ SMS24h conectado! Saldo: R$ ${result.balance}`, 'success');
+        } else {
+          updateStatus('sms24h', 'error', 'Erro na conexão');
+          showNotification(`❌ Erro: ${result.error}`, 'error');
+        }
+      } catch (error) {
+        updateStatus('sms24h', 'error', 'Erro na conexão');
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    });
+
+    // Salvar Mercado Pago
+    document.getElementById('btn-save-mp').addEventListener('click', () => {
+      const token = document.getElementById('mp-access-token').value.trim();
+
+      if (!token) {
+        showNotification('Erro: Access Token vazio', 'error');
+        return;
+      }
+
+      localStorage.setItem('mp_access_token', token);
+
+      updateStatus('mp', 'warning', 'Salvo - Não testado');
+      showNotification('✅ Mercado Pago configurado com sucesso', 'success');
+    });
+
+    // Testar Mercado Pago
+    document.getElementById('btn-test-mp').addEventListener('click', async () => {
+      const token = document.getElementById('mp-access-token').value.trim();
+
+      if (!token) {
+        showNotification('Erro: Configure o Access Token primeiro', 'error');
+        return;
+      }
+
+      updateStatus('mp', 'warning', 'Testando...');
+      showNotification('🧪 Testando conexão Mercado Pago...', 'info');
+
+      try {
+        const MercadoPagoClient = require('../../core/mercadopago-client');
+        const client = new MercadoPagoClient(token);
+        const result = await client.getAccount();
+
+        if (result.success) {
+          updateStatus('mp', 'success', `✓ OK - ${result.account.email}`);
+          showNotification(`✅ Mercado Pago conectado! Email: ${result.account.email}`, 'success');
+        } else {
+          updateStatus('mp', 'error', 'Erro na conexão');
+          showNotification(`❌ Erro: ${result.error}`, 'error');
+        }
+      } catch (error) {
+        updateStatus('mp', 'error', 'Erro na conexão');
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    });
+
+    // Salvar Dolphin
+    document.getElementById('btn-save-dolphin').addEventListener('click', () => {
+      const host = document.getElementById('dolphin-host').value.trim();
+      const port = document.getElementById('dolphin-port').value;
+      const minProfiles = document.getElementById('dolphin-min-profiles').value;
+
+      if (!host || !port) {
+        showNotification('Erro: Configure host e porta', 'error');
+        return;
+      }
+
+      localStorage.setItem('dolphin_host', host);
+      localStorage.setItem('dolphin_port', port);
+      localStorage.setItem('dolphin_min_profiles', minProfiles);
+
+      updateStatus('dolphin', 'warning', 'Salvo - Não testado');
+      showNotification('✅ Dolphin Anty configurado com sucesso', 'success');
+    });
+
+    // Testar Dolphin
+    document.getElementById('btn-test-dolphin').addEventListener('click', async () => {
+      const host = document.getElementById('dolphin-host').value.trim();
+      const port = document.getElementById('dolphin-port').value;
+
+      if (!host || !port) {
+        showNotification('Erro: Configure host e porta primeiro', 'error');
+        return;
+      }
+
+      updateStatus('dolphin', 'warning', 'Testando...');
+      showNotification('🧪 Testando conexão Dolphin Anty...', 'info');
+
+      try {
+        const DolphinClient = require('../../core/dolphin-client');
+        const client = new DolphinClient(parseInt(port), host);
+        const result = await client.checkStatus();
+
+        if (result.success && result.running) {
+          const profiles = await client.listProfiles(1, 100);
+          const count = profiles.total || 0;
+          updateStatus('dolphin', 'success', `✓ OK - ${count} perfis`);
+          showNotification(`✅ Dolphin conectado! ${count} perfis disponíveis`, 'success');
+
+          const minProfiles = parseInt(document.getElementById('dolphin-min-profiles').value);
+          if (count < minProfiles) {
+            showNotification(`⚠️ Aviso: Recomendado ter pelo menos ${minProfiles} perfis (você tem ${count})`, 'warning');
+          }
+        } else {
+          updateStatus('dolphin', 'error', 'Dolphin não está rodando');
+          showNotification('❌ Dolphin Anty não está rodando. Inicie o aplicativo.', 'error');
+        }
+      } catch (error) {
+        updateStatus('dolphin', 'error', 'Erro na conexão');
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      }
+    });
+
+    // Carregar ao iniciar
+    loadSettings();
+  </script>
+</body>
+</html>
