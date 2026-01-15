@@ -2,9 +2,9 @@
 
 const ROUTER_PERMISSIONS =
   window.APP_PERMISSIONS || {
-    dev: ["macros", "pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links"],
-    creator: ["macros", "pix", "settings", "pix-generator"],
-    consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas", "referral-links"],
+    dev: ["macros", "pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links", "dashboard", "admin", "scheduler"],
+    creator: ["macros", "pix", "settings", "pix-generator", "dashboard"],
+    consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas", "referral-links", "dashboard", "scheduler"],
   };
 
 const APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
@@ -132,8 +132,10 @@ function createMenu(userOverride) {
     (window.location.pathname.split('/').pop() || '').replace('.html', '');
 
   const navStructure = [
+    { page: 'dashboard', label: 'Dashboard' },
     { page: 'macros', label: user.role === 'dev' ? 'Criar macros' : 'Inicio' },
     { page: 'execute', label: 'Executar' },
+    { page: 'scheduler', label: 'Agendamento' },
     { page: 'contas', label: 'Contas' },
     { page: 'passwords', label: 'Senhas' },
     { page: 'pix', label: 'Chaves PIX' },
@@ -142,7 +144,8 @@ function createMenu(userOverride) {
     { page: 'referral-links', label: 'Links de Indicacao' },
     { page: 'dolphin', label: 'Dolphin Anty' },
     { page: 'telas', label: 'Layout de Telas' },
-    { page: 'settings', label: 'Configuracoes' }
+    { page: 'settings', label: 'Configuracoes' },
+    ...(user.role === 'dev' ? [{ page: 'admin', label: 'Administracao' }] : [])
   ];
 
   const userPermissions = ROUTER_PERMISSIONS[user.role] || [];

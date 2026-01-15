@@ -275,4 +275,34 @@ CREATE INDEX idx_referral_active     ON referral_links(is_active);
 CREATE INDEX idx_referral_priority   ON referral_links(priority DESC);
 CREATE INDEX idx_referral_usage      ON referral_links(usage_count DESC);
 
+-- ==============================================
+-- TABELA: scheduled_executions
+-- Agendamentos automáticos de execuções
+-- ==============================================
+CREATE TABLE IF NOT EXISTS scheduled_executions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  macro_id UUID,
+  frequency VARCHAR(20) NOT NULL,
+  scheduled_time TIME NOT NULL,
+  weekday INTEGER,
+  day_of_month INTEGER,
+  instances_count INTEGER DEFAULT 1,
+  referral_link_id UUID,
+  is_active BOOLEAN DEFAULT TRUE,
+  execution_count INTEGER DEFAULT 0,
+  last_execution TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (macro_id) REFERENCES macros(id) ON DELETE CASCADE,
+  FOREIGN KEY (referral_link_id) REFERENCES referral_links(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_scheduled_user      ON scheduled_executions(user_id);
+CREATE INDEX idx_scheduled_active    ON scheduled_executions(is_active);
+CREATE INDEX idx_scheduled_time      ON scheduled_executions(scheduled_time);
+CREATE INDEX idx_scheduled_frequency ON scheduled_executions(frequency);
+
 -- Ajuste as policies se estiver usando Row Level Security (por padrao cada tabela nova vem com RLS desligado; quando ligar, crie policies filtrando por user_id = auth.uid() ou similar).

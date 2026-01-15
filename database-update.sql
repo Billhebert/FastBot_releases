@@ -163,6 +163,31 @@ CREATE INDEX IF NOT EXISTS idx_referral_active ON referral_links(is_active);
 CREATE INDEX IF NOT EXISTS idx_referral_priority ON referral_links(priority DESC);
 CREATE INDEX IF NOT EXISTS idx_referral_usage ON referral_links(usage_count DESC);
 
+-- 9) Tabela de agendamentos
+CREATE TABLE IF NOT EXISTS scheduled_executions (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name           VARCHAR(200) NOT NULL,
+  macro_id       UUID REFERENCES macros(id) ON DELETE CASCADE,
+  frequency      VARCHAR(20) NOT NULL,
+  scheduled_time TIME NOT NULL,
+  weekday        INTEGER,
+  day_of_month   INTEGER,
+  instances_count INTEGER DEFAULT 1,
+  referral_link_id UUID REFERENCES referral_links(id) ON DELETE SET NULL,
+  is_active      BOOLEAN DEFAULT TRUE,
+  execution_count INTEGER DEFAULT 0,
+  last_execution TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices para scheduled_executions
+CREATE INDEX IF NOT EXISTS idx_scheduled_user ON scheduled_executions(user_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_active ON scheduled_executions(is_active);
+CREATE INDEX IF NOT EXISTS idx_scheduled_time ON scheduled_executions(scheduled_time);
+CREATE INDEX IF NOT EXISTS idx_scheduled_frequency ON scheduled_executions(frequency);
+
 -- =========================================================
 -- VERIFICAÇÃO
 -- =========================================================
@@ -206,9 +231,14 @@ UNION ALL
 SELECT
   'referral_links' as tabela,
   COUNT(*) as registros
-FROM referral_links;
+FROM referral_links
+UNION ALL
+SELECT
+  'scheduled_executions' as tabela,
+  COUNT(*) as registros
+FROM scheduled_executions;
 
 -- =========================================================
 -- SUCESSO!
--- Se você viu 8 tabelas com 0 registros acima, está tudo OK!
+-- Se você viu 9 tabelas com 0 registros acima, está tudo OK!
 -- =========================================================
