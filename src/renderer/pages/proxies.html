@@ -427,15 +427,79 @@
   <script src="supabase-client.js"></script>
   <script src="auth.js"></script>
   <script src="router.js"></script>
+  <script src="bulk-operations.js"></script>
 
   <script>
     let currentUser = null;
     let proxiesData = [];
+    let bulkOps = null;
 
     // Inicializar
     async function init() {
       currentUser = await requirePagePermission("proxies");
       if (!currentUser) return;
+
+      // Inicializar bulk operations
+      bulkOps = new BulkOperations({
+        tableName: 'proxies',
+        onSelectionChange: (count) => {
+          bulkOps.toggleActionsBar(count > 0);
+        }
+      });
+
+      // Criar barra de ações em lote
+      bulkOps.createBulkActionsBar([
+        {
+          label: '🗑️ Excluir Selecionados',
+          color: '#e74c3c',
+          textColor: '#fff',
+          handler: async (ids) => {
+            const result = await bulkOps.bulkDelete(supabaseClient, 'proxies', currentUser.id);
+            if (result.success) {
+              showNotification(`✅ ${result.deletedCount} proxy(s) excluído(s)`, 'success');
+              await loadProxies();
+            } else {
+              showNotification(`❌ Erro: ${result.error}`, 'error');
+            }
+          }
+        },
+        {
+          label: '📥 Exportar Selecionados',
+          color: '#3498db',
+          textColor: '#fff',
+          handler: (ids) => {
+            bulkOps.exportSelectedAsCSV(proxiesData, `proxies-${Date.now()}.csv`);
+          }
+        },
+        {
+          label: '✓ Ativar Todos',
+          color: '#2ecc71',
+          textColor: '#fff',
+          handler: async (ids) => {
+            const result = await bulkOps.bulkUpdate(supabaseClient, 'proxies', { active: true }, currentUser.id);
+            if (result.success) {
+              showNotification(`✅ ${result.updatedCount} proxy(s) ativado(s)`, 'success');
+              await loadProxies();
+            } else {
+              showNotification(`❌ Erro: ${result.error}`, 'error');
+            }
+          }
+        },
+        {
+          label: '⏸️ Desativar Todos',
+          color: '#95a5a6',
+          textColor: '#fff',
+          handler: async (ids) => {
+            const result = await bulkOps.bulkUpdate(supabaseClient, 'proxies', { active: false }, currentUser.id);
+            if (result.success) {
+              showNotification(`✅ ${result.updatedCount} proxy(s) desativado(s)`, 'success');
+              await loadProxies();
+            } else {
+              showNotification(`❌ Erro: ${result.error}`, 'error');
+            }
+          }
+        }
+      ]);
 
       await loadProxies();
 
@@ -495,8 +559,9 @@
 
       const proxyType = document.getElementById('proxy-type').value.toUpperCase();
 
+      const tableId = 'proxies-table';
       container.innerHTML = `
-        <table>
+        <table id="${tableId}">
           <thead>
             <tr>
               <th>Tipo</th>
@@ -534,6 +599,15 @@
           </tbody>
         </table>
       `;
+
+      // Inicializar bulk operations na tabela
+      bulkOps.init(`#${tableId}`);
+
+      // Adicionar checkboxes às linhas
+      const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+      rows.forEach((row, index) => {
+        bulkOps.addCheckboxToRow(row, proxiesData[index].id);
+      });
     }
 
     // Abrir modal de importação
