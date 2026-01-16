@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de PIX - FastBot</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .generator-container {
+      padding: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .generator-panel {
+      background: rgba(30, 30, 30, 0.8);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+
+    .generator-panel h2 {
+      color: #d4af37;
+      font-size: 18px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-field label {
+      color: #ccc;
+      font-size: 13px;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .form-field input,
+    .form-field select {
+      padding: 10px;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    .provider-selector {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .provider-option {
+      flex: 1;
+      padding: 15px;
+      background: #1a1a1a;
+      border: 2px solid #444;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .provider-option:hover {
+      border-color: #d4af37;
+      transform: translateY(-2px);
+    }
+
+    .provider-option.active {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: #d4af37;
+    }
+
+    .provider-option input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .provider-option label {
+      color: #ccc;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      flex: 1;
+    }
+
+    .btn-generate {
+      background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+      color: #000;
+    }
+
+    .btn-generate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-import {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #fff;
+    }
+
+    .btn-import:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .progress-container {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #d4af37 0%, #b8941f 100%);
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-text {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      line-height: 30px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pix-list {
+      margin-top: 20px;
+    }
+
+    .pix-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #1a1a1a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .pix-table thead {
+      background: rgba(212, 175, 55, 0.1);
+    }
+
+    .pix-table th {
+      padding: 12px;
+      text-align: left;
+      color: #d4af37;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid #444;
+    }
+
+    .pix-table td {
+      padding: 12px;
+      color: #ccc;
+      font-size: 13px;
+      border-bottom: 1px solid #333;
+    }
+
+    .pix-table tbody tr:hover {
+      background: rgba(212, 175, 55, 0.05);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-random { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+    .badge-phone { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+    .badge-email { background: rgba(26, 188, 156, 0.2); color: #1abc9c; }
+    .badge-cpf { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
+    .badge-confirmed { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+    .badge-pending { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+
+    .btn-action {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-copy {
+      background: rgba(52, 152, 219, 0.2);
+      color: #3498db;
+      border: 1px solid #3498db;
+    }
+
+    .btn-copy:hover {
+      background: rgba(52, 152, 219, 0.4);
+    }
+
+    .btn-delete {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+    }
+
+    .btn-delete:hover {
+      background: rgba(231, 76, 60, 0.4);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="titlebar" id="titlebar"></header>
+
+      <div class="generator-container">
+        <h1 style="color: #d4af37; margin-bottom: 30px;">🔑 Gerador Automático de PIX</h1>
+
+        <!-- Generator Panel -->
+        <div class="generator-panel">
+          <h2>Configuração de Geração</h2>
+
+          <div class="provider-selector">
+            <div class="provider-option active" onclick="toggleProvider('sms24h', this)">
+              <input type="checkbox" id="provider-sms24h" checked>
+              <label for="provider-sms24h">📱 SMS 24 Horas</label>
+            </div>
+            <div class="provider-option" onclick="toggleProvider('dropmail', this)">
+              <input type="checkbox" id="provider-dropmail">
+              <label for="provider-dropmail">📧 DropMail</label>
+            </div>
+            <div class="provider-option" onclick="toggleProvider('mailtin', this)">
+              <input type="checkbox" id="provider-mailtin">
+              <label for="provider-mailtin">✉️ Mail.tm</label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Tipo de Chave PIX</label>
+              <select id="pix-key-type">
+                <option value="random">Aleatória (EVP)</option>
+                <option value="phone">Telefone</option>
+                <option value="email">Email</option>
+                <option value="cpf">CPF</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Quantidade para Gerar</label>
+              <input type="number" id="pix-quantity" value="1" min="1" max="50">
+            </div>
+
+            <div class="form-field">
+              <label>Nome (Opcional)</label>
+              <input type="text" id="pix-first-name" placeholder="João">
+            </div>
+
+            <div class="form-field">
+              <label>Sobrenome (Opcional)</label>
+              <input type="text" id="pix-last-name" placeholder="Silva">
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-generate" id="btn-generate">
+              🚀 Gerar PIX Automaticamente
+            </button>
+            <button class="btn btn-import" id="btn-import">
+              📥 Importar Chaves PIX
+            </button>
+          </div>
+
+          <div class="progress-container" id="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+              <div class="progress-text" id="progress-text">0%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIX Keys List -->
+        <div class="generator-panel">
+          <h2>Chaves PIX Geradas (<span id="pix-count">0</span>)</h2>
+
+          <div class="pix-list">
+            <table class="pix-table" id="pix-table">
+              <thead>
+                <tr>
+                  <th>Chave PIX</th>
+                  <th>Tipo</th>
+                  <th>Telefone</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Data</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="pix-tbody">
+                <tr>
+                  <td colspan="7" class="empty-state">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <p>Nenhuma chave PIX gerada ainda</p>
+                    <p style="font-size: 12px;">Clique em "Gerar PIX Automaticamente" para começar</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="notifications.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="router.js"></script>
+  <script>
+    let currentUser = null;
+
+    function toggleProvider(provider, element) {
+      const checkbox = element.querySelector('input');
+      checkbox.checked = !checkbox.checked;
+      element.classList.toggle('active');
+    }
+
+    // Carregar chaves PIX do banco
+    async function loadPixKeys() {
+      try {
+        const { data, error } = await supabase
+          .from('generated_pix_keys')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const tbody = document.getElementById('pix-tbody');
+        document.getElementById('pix-count').textContent = data.length;
+
+        if (data.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="empty-state">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <p>Nenhuma chave PIX gerada ainda</p>
+                <p style="font-size: 12px;">Clique em "Gerar PIX Automaticamente" para começar</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = data.map(key => `
+          <tr>
+            <td><code style="color: #3498db;">${key.pix_key}</code></td>
+            <td><span class="badge badge-${key.key_type}">${key.key_type}</span></td>
+            <td>${key.phone_number || '-'}</td>
+            <td>${key.email || '-'}</td>
+            <td><span class="badge ${key.confirmed ? 'badge-confirmed' : 'badge-pending'}">${key.confirmed ? 'Confirmada' : 'Pendente'}</span></td>
+            <td>${new Date(key.created_at).toLocaleString('pt-BR')}</td>
+            <td>
+              <button class="btn-action btn-copy" onclick="copyPixKey('${key.pix_key}')">📋 Copiar</button>
+              <button class="btn-action btn-delete" onclick="deletePixKey('${key.id}')">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Erro ao carregar chaves PIX:', error);
+        showNotification('Erro ao carregar chaves PIX', 'error');
+      }
+    }
+
+    // Gerar PIX
+    document.getElementById('btn-generate').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-generate');
+      const keyType = document.getElementById('pix-key-type').value;
+      const quantity = parseInt(document.getElementById('pix-quantity').value);
+      const firstName = document.getElementById('pix-first-name').value.trim();
+      const lastName = document.getElementById('pix-last-name').value.trim();
+
+      // Validar APIs configuradas
+      const sms24hKey = localStorage.getItem('sms24h_api_key');
+      const mpToken = localStorage.getItem('mp_access_token');
+
+      if (!sms24hKey || !mpToken) {
+        showNotification('❌ Configure SMS24h e Mercado Pago em Configurações primeiro', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Gerando...';
+      document.getElementById('progress-container').style.display = 'block';
+
+      try {
+        for (let i = 1; i <= quantity; i++) {
+          const progress = (i / quantity) * 100;
+          document.getElementById('progress-fill').style.width = `${progress}%`;
+          document.getElementById('progress-text').textContent = `${i}/${quantity} (${Math.round(progress)}%)`;
+
+          // Chamar IPC para gerar PIX
+          const result = await window.electron.ipcRenderer.invoke('generate-pix', {
+            sms24hKey,
+            mpToken,
+            keyType,
+            firstName,
+            lastName
+          });
+
+          if (result.success) {
+            // Salvar no banco
+            await supabase.from('generated_pix_keys').insert({
+              user_id: currentUser.id,
+              pix_key: result.pixKey,
+              key_type: result.keyType,
+              phone_number: result.phone,
+              email: result.email,
+              cpf: result.cpf,
+              mp_user_id: result.userId,
+              confirmed: true
+            });
+
+            showNotification(`✅ Chave ${i}/${quantity} gerada: ${result.pixKey.substring(0, 20)}...`, 'success');
+          } else {
+            showNotification(`❌ Erro na chave ${i}/${quantity}: ${result.error}`, 'error');
+          }
+
+          // Delay entre gerações
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        showNotification(`🎉 ${quantity} chave(s) PIX geradas com sucesso!`, 'success');
+        loadPixKeys();
+
+      } catch (error) {
+        console.error('Erro ao gerar PIX:', error);
+        showNotification(`❌ Erro: ${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Gerar PIX Automaticamente';
+        document.getElementById('progress-container').style.display = 'none';
+      }
+    });
+
+    // Copiar chave PIX
+    window.copyPixKey = async (pixKey) => {
+      try {
+        await navigator.clipboard.writeText(pixKey);
+        showNotification('📋 Chave PIX copiada!', 'success');
+      } catch (error) {
+        showNotification('Erro ao copiar', 'error');
+      }
+    };
+
+    // Deletar chave PIX
+    window.deletePixKey = async (keyId) => {
+      if (!confirm('Tem certeza que deseja deletar esta chave PIX?')) return;
+
+      try {
+        const { error } = await supabase
+          .from('generated_pix_keys')
+          .delete()
+          .eq('id', keyId);
+
+        if (error) throw error;
+
+        showNotification('🗑️ Chave PIX deletada', 'success');
+        loadPixKeys();
+      } catch (error) {
+        console.error('Erro ao deletar:', error);
+        showNotification('Erro ao deletar', 'error');
+      }
+    };
+
+    // Importar chaves PIX
+    document.getElementById('btn-import').addEventListener('click', async () => {
+      // TODO: Implementar importação de arquivo
+      showNotification('🚧 Funcionalidade em desenvolvimento', 'info');
+    });
+
+    // Carregar ao iniciar
+    async function init() {
+      currentUser = await getCurrentUser();
+      if (currentUser) {
+        loadPixKeys();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

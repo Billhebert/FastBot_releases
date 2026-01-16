@@ -1,0 +1,319 @@
+{
+  "macros_de_teste": [
+    {
+      "nome": "Teste 1 - Pesquisa de Jogos",
+      "descricao": "Testa a pesquisa automatizada de jogos",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "search_game",
+          "gameName": "Aviator",
+          "searchSelector": "",
+          "resultSelector": "",
+          "waitForResults": 3000
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        }
+      ]
+    },
+    {
+      "nome": "Teste 2 - Verificação de Rollover",
+      "descricao": "Testa a verificação de rollover em tempo real",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/perfil"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "check_rollover",
+          "selector": ".rollover-value",
+          "minValue": 10,
+          "maxValue": 500,
+          "stopIfBelow": false,
+          "format": "decimal"
+        },
+        {
+          "type": "wait",
+          "duration": 1000
+        }
+      ]
+    },
+    {
+      "nome": "Teste 3 - Saque Automático",
+      "descricao": "Testa saque automático com PIX",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/saque"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "withdraw",
+          "amountSelector": "input[name='amount']",
+          "amount": 50,
+          "useMaxBalance": false,
+          "balanceSelector": ".balance-value",
+          "pixSelector": "input[name='pix']",
+          "submitSelector": "button.withdraw-btn",
+          "confirmSelector": "button.confirm-btn",
+          "waitAfterSubmit": 3000,
+          "verifySuccess": true,
+          "successSelector": ".success-message"
+        }
+      ]
+    },
+    {
+      "nome": "Teste 4 - Coleta de Bônus",
+      "descricao": "Testa coleta ativa de bônus",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/promocoes"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "collect_bonus",
+          "searchSelectors": [
+            ".bonus-card button",
+            ".promo-button"
+          ],
+          "clickSelectors": [],
+          "keywords": [
+            "pegar bonus",
+            "resgatar",
+            "ativar",
+            "claim"
+          ],
+          "waitAfterCollect": 2000,
+          "maxBonus": 5,
+          "scrollToFind": true
+        }
+      ]
+    },
+    {
+      "nome": "Teste 5 - Reabertura de Conta",
+      "descricao": "Testa reabertura automática de conta bloqueada",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/perfil"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "reopen_account",
+          "errorSelectors": [
+            ".error-message",
+            ".account-blocked"
+          ],
+          "errorKeywords": [
+            "bloqueada",
+            "suspensa",
+            "inativa"
+          ],
+          "reopenUrl": "https://exemplo-casa-de-apostas.com/reativar",
+          "reopenActions": [
+            {
+              "type": "click",
+              "selector": "button.reopen-account"
+            },
+            {
+              "type": "wait",
+              "duration": 1000
+            },
+            {
+              "type": "click",
+              "selector": "button.confirm"
+            }
+          ],
+          "maxRetries": 3,
+          "retryDelay": 5000
+        }
+      ]
+    },
+    {
+      "nome": "Teste 6 - Modo Espelho (Mouse Movement)",
+      "descricao": "Testa movimento humanizado de mouse",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "mouse_move",
+          "fromX": 100,
+          "fromY": 100,
+          "toX": 800,
+          "toY": 400,
+          "duration": 1500
+        },
+        {
+          "type": "wait",
+          "duration": 500
+        },
+        {
+          "type": "mouse_move",
+          "fromX": 800,
+          "fromY": 400,
+          "toX": 300,
+          "toY": 600,
+          "duration": 1200
+        }
+      ]
+    },
+    {
+      "nome": "Teste 7 - Fluxo Completo de Cadastro",
+      "descricao": "Testa todas as funcionalidades juntas",
+      "device_type": "desktop",
+      "actions": [
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/cadastro"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "input",
+          "selector": "input[name='email']",
+          "value": "{{email}}"
+        },
+        {
+          "type": "input",
+          "selector": "input[name='password']",
+          "value": "{{password}}"
+        },
+        {
+          "type": "input",
+          "selector": "input[name='phone']",
+          "value": "{{phone}}"
+        },
+        {
+          "type": "click",
+          "selector": "button[type='submit']"
+        },
+        {
+          "type": "wait",
+          "duration": 3000
+        },
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/perfil"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "input",
+          "selector": "input[name='pix']",
+          "value": "{{pix}}"
+        },
+        {
+          "type": "click",
+          "selector": "button.save-pix"
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/jogos"
+        },
+        {
+          "type": "search_game",
+          "gameName": "Aviator",
+          "waitForResults": 2000
+        },
+        {
+          "type": "wait",
+          "duration": 3000
+        },
+        {
+          "type": "navigate",
+          "url": "https://exemplo-casa-de-apostas.com/promocoes"
+        },
+        {
+          "type": "collect_bonus",
+          "maxBonus": 3,
+          "scrollToFind": true
+        },
+        {
+          "type": "wait",
+          "duration": 2000
+        },
+        {
+          "type": "check_rollover",
+          "selector": ".rollover-value",
+          "minValue": 1,
+          "maxValue": 1000,
+          "stopIfBelow": false
+        }
+      ]
+    },
+    {
+      "nome": "Teste 8 - Geração de PIX (Script Node.js)",
+      "descricao": "Execute este código Node.js separadamente para testar geração de PIX",
+      "tipo": "nodejs",
+      "codigo": "const PixGenerator = require('./src/core/pix-generator');\n\n// CONFIGURE SUAS API KEYS AQUI:\nconst SMS24H_API_KEY = 'sua-api-key-sms24h';\nconst MP_ACCESS_TOKEN = 'seu-access-token-mercadopago';\n\nasync function testarGeracaoPix() {\n  const generator = new PixGenerator(SMS24H_API_KEY, MP_ACCESS_TOKEN);\n\n  console.log('=== TESTE 1: Verificar saldo SMS24h ===');\n  const saldo = await generator.checkSmsBalance();\n  console.log('Saldo:', saldo);\n\n  console.log('\\n=== TESTE 2: Gerar 1 chave PIX aleatória ===');\n  const resultado = await generator.generatePixKey({}, 'random');\n  console.log('Resultado:', resultado);\n\n  if (resultado.success) {\n    console.log('\\n✓ Chave PIX gerada com sucesso!');\n    console.log('Chave:', resultado.pixKey);\n    console.log('Telefone:', resultado.phone);\n    console.log('Email:', resultado.email);\n    console.log('CPF:', resultado.cpf);\n  }\n}\n\ntestarGeracaoPix().catch(console.error);"
+    },
+    {
+      "nome": "Teste 9 - Dolphin Anty (Script Node.js)",
+      "descricao": "Execute este código Node.js para testar integração Dolphin",
+      "tipo": "nodejs",
+      "codigo": "const DolphinClient = require('./src/core/dolphin-client');\n\nasync function testarDolphin() {\n  const dolphin = new DolphinClient(3001, 'localhost');\n\n  console.log('=== TESTE 1: Verificar se Dolphin está rodando ===');\n  const status = await dolphin.checkStatus();\n  console.log('Status:', status);\n\n  if (!status.running) {\n    console.error('✗ Dolphin Anty não está rodando!');\n    console.log('Inicie o Dolphin Anty e tente novamente.');\n    return;\n  }\n\n  console.log('\\n=== TESTE 2: Listar perfis disponíveis ===');\n  const perfis = await dolphin.listProfiles(1, 10);\n  console.log('Perfis encontrados:', perfis.total);\n\n  if (perfis.profiles && perfis.profiles.length > 0) {\n    console.log('\\nPrimeiro perfil:');\n    console.log('- ID:', perfis.profiles[0].id);\n    console.log('- Nome:', perfis.profiles[0].name);\n\n    console.log('\\n=== TESTE 3: Conectar Puppeteer ao primeiro perfil ===');\n    const primeiroPerfilId = perfis.profiles[0].id;\n\n    const conexao = await dolphin.connectPuppeteer(primeiroPerfilId);\n\n    if (conexao.success) {\n      console.log('✓ Puppeteer conectado com sucesso!');\n      console.log('WS Endpoint:', conexao.wsEndpoint);\n\n      // Testar navegação\n      await conexao.page.goto('https://www.google.com');\n      console.log('✓ Navegação testada com sucesso!');\n\n      // Fechar\n      await conexao.browser.disconnect();\n      await dolphin.stopProfile(primeiroPerfilId);\n      console.log('✓ Perfil fechado');\n    }\n  } else {\n    console.log('⚠ Nenhum perfil encontrado no Dolphin Anty');\n    console.log('Crie pelo menos 1 perfil no Dolphin para testar.');\n  }\n}\n\ntestarDolphin().catch(console.error);"
+    }
+  ],
+  "instrucoes": {
+    "como_usar": [
+      "1. Copie o macro de teste desejado (actions array)",
+      "2. Cole no editor de macros do FastBot",
+      "3. Configure os seletores corretos para o site que você quer testar",
+      "4. Execute o macro e verifique os logs no console",
+      "5. Para testes de PIX e Dolphin, execute os scripts Node.js diretamente"
+    ],
+    "scripts_nodejs": [
+      "Para Teste 8 (PIX): node -e \"$(cat test-macros.json | jq -r '.macros_de_teste[7].codigo')\"",
+      "Para Teste 9 (Dolphin): node -e \"$(cat test-macros.json | jq -r '.macros_de_teste[8].codigo')\""
+    ],
+    "observacoes": [
+      "Substitua 'exemplo-casa-de-apostas.com' pela URL real",
+      "Configure os seletores CSS corretos para seu site alvo",
+      "Para PIX e Dolphin, forneça as credenciais reais",
+      "Os seletores nos exemplos são genéricos - ajuste conforme necessário"
+    ]
+  }
+}

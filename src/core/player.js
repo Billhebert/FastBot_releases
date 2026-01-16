@@ -618,6 +618,18 @@ async function executeAction(page, action, agent) {
       return await handleCondition(page, action, agent);
     case 'close_popups':
       return await handleClosePopups(page, action);
+    case 'search_game':
+      return await handleSearchGame(page, action);
+    case 'mouse_move':
+      return await handleMouseMove(page, action);
+    case 'check_rollover':
+      return await handleCheckRollover(page, action);
+    case 'withdraw':
+      return await handleWithdraw(page, action);
+    case 'reopen_account':
+      return await handleReopenAccount(page, action);
+    case 'collect_bonus':
+      return await handleCollectBonus(page, action);
     default:
       console.warn(`>> Tipo de acao desconhecido: ${action.type}`);
       return { success: false, error: `Tipo de acao desconhecido: ${action.type}` };
@@ -1361,17 +1373,717 @@ async function handleLoop(page, action, agent) {
 async function handleCondition(page, action, agent) {
   let conditionMet = false;
   const selectorValue = sanitizeSelectorValue(action.selector || '');
-  
+
   if (action.condition === 'element_exists') {
     conditionMet = !!(await page.$(selectorValue));
   } else if (action.condition === 'element_not_exists') {
     conditionMet = !(await page.$(selectorValue));
   }
-  
+
   const actionsToExecute = conditionMet ? (action.then || []) : (action.else || []);
   for (const subAction of actionsToExecute) {
     await executeAction(page, subAction, agent);
     await page.waitForTimeout(300);
+  }
+}
+
+// ============================================
+// FUNCAO SEARCH_GAME - Pesquisa automatizada de jogos
+// ============================================
+
+async function handleSearchGame(page, action) {
+  const { gameName, searchSelector, resultSelector, waitForResults = 2000 } = action;
+
+  console.log(`   SEARCH_GAME: Procurando por "${gameName}"`);
+
+  try {
+    // 1. Buscar campo de pesquisa
+    let searchInput = null;
+
+    if (searchSelector) {
+      // Se o usuario forneceu um seletor especifico
+      const selectorValue = sanitizeSelectorValue(searchSelector);
+      searchInput = await page.$(selectorValue);
+      console.log(`   Usando seletor customizado: ${selectorValue}`);
+    } else {
+      // Tentar encontrar campo de pesquisa automaticamente
+      const commonSearchSelectors = [
+        'input[placeholder*="procurar" i]',
+        'input[placeholder*="buscar" i]',
+        'input[placeholder*="search" i]',
+        'input[placeholder*="pesquisar" i]',
+        'input[placeholder*="jogo" i]',
+        'input[placeholder*="game" i]',
+        'input[type="search"]',
+        'input[name*="search" i]',
+        'input[name*="busca" i]',
+        'input[id*="search" i]',
+        'input[id*="busca" i]',
+        'input[class*="search" i]',
+        'input[class*="busca" i]',
+        'input[aria-label*="search" i]',
+        'input[aria-label*="buscar" i]'
+      ];
+
+      for (const selector of commonSearchSelectors) {
+        searchInput = await page.$(selector);
+        if (searchInput) {
+          console.log(`   Campo de pesquisa encontrado: ${selector}`);
+          break;
+        }
+      }
+    }
+
+    if (!searchInput) {
+      throw new Error('Campo de pesquisa nao encontrado. Forneca um "searchSelector" customizado.');
+    }
+
+    // 2. Clicar no campo e limpar
+    await searchInput.click();
+    await page.waitForTimeout(300);
+
+    // Limpar campo (3x Ctrl+A + Backspace para garantir)
+    await page.keyboard.down('Control');
+    await page.keyboard.press('KeyA');
+    await page.keyboard.up('Control');
+    await page.keyboard.press('Backspace');
+    await page.waitForTimeout(100);
+
+    console.log(`   Campo de pesquisa focado e limpo`);
+
+    // 3. Digitar nome do jogo com velocidade humana
+    for (const char of gameName) {
+      await page.keyboard.type(char);
+      await page.waitForTimeout(50 + Math.random() * 100);
+    }
+
+    console.log(`   Digitado: "${gameName}"`);
+
+    // 4. Pressionar Enter ou aguardar resultados
+    await page.keyboard.press('Enter');
+    console.log(`   Enter pressionado`);
+
+    // 5. Aguardar resultados aparecerem
+    await page.waitForTimeout(waitForResults);
+    console.log(`   Aguardando ${waitForResults}ms para resultados carregarem...`);
+
+    // 6. Clicar no primeiro resultado (se fornecido seletor)
+    if (resultSelector) {
+      const selectorValue = sanitizeSelectorValue(resultSelector);
+      const firstResult = await page.$(selectorValue);
+
+      if (firstResult) {
+        await firstResult.click();
+        console.log(`   Primeiro resultado clicado: ${selectorValue}`);
+        await page.waitForTimeout(1000);
+      } else {
+        console.warn(`   Nenhum resultado encontrado com seletor: ${selectorValue}`);
+      }
+    } else {
+      // Tentar clicar automaticamente no primeiro resultado visivel
+      const autoResultSelectors = [
+        'a[href*="jogo" i]:first-of-type',
+        'a[href*="game" i]:first-of-type',
+        '[class*="game-card" i]:first-of-type',
+        '[class*="game-item" i]:first-of-type',
+        '[data-game]:first-of-type',
+        '.game:first-of-type',
+        '[class*="result" i]:first-of-type a'
+      ];
+
+      let clicked = false;
+      for (const selector of autoResultSelectors) {
+        const result = await page.$(selector);
+        if (result) {
+          await result.click();
+          console.log(`   Primeiro resultado clicado automaticamente: ${selector}`);
+          await page.waitForTimeout(1000);
+          clicked = true;
+          break;
+        }
+      }
+
+      if (!clicked) {
+        console.warn(`   Nenhum resultado foi clicado. Configure um "resultSelector" para melhor precisao.`);
+      }
+    }
+
+    console.log(`   Pesquisa de jogo concluida`);
+    return { success: true };
+
+  } catch (error) {
+    console.error(`   ERRO ao executar SEARCH_GAME: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// FUNCAO MOUSE_MOVE - Movimento humanizado de mouse (Modo Espelho)
+// ============================================
+
+async function handleMouseMove(page, action) {
+  const { fromX, fromY, toX, toY, duration = 1000, movements = [] } = action;
+
+  console.log(`   MOUSE_MOVE: (${fromX}, ${fromY}) -> (${toX}, ${toY}) [${duration}ms]`);
+
+  try {
+    // Se temos os movimentos gravados, reproduzir exatamente
+    if (movements && movements.length > 1) {
+      console.log(`   Reproduzindo ${movements.length} pontos gravados`);
+
+      for (let i = 0; i < movements.length; i++) {
+        const point = movements[i];
+        await page.mouse.move(point.x, point.y);
+
+        // Aguardar delay entre pontos (baseado no timing original se possivel)
+        if (i < movements.length - 1) {
+          const nextPoint = movements[i + 1];
+          const delay = nextPoint.timestamp - point.timestamp;
+          await page.waitForTimeout(Math.min(delay, 100)); // Max 100ms entre pontos
+        }
+      }
+    } else {
+      // Caso nao tenha movimentos gravados, gerar curva Bezier
+      console.log(`   Gerando movimento com curva Bezier`);
+
+      const steps = 20 + Math.floor(Math.random() * 10); // 20-30 steps
+      const stepDuration = duration / steps;
+
+      // Pontos de controle para curva Bezier cubica
+      const controlX1 = fromX + (toX - fromX) * 0.25 + (Math.random() * 50 - 25);
+      const controlY1 = fromY + (toY - fromY) * 0.25 + (Math.random() * 50 - 25);
+      const controlX2 = fromX + (toX - fromX) * 0.75 + (Math.random() * 50 - 25);
+      const controlY2 = fromY + (toY - fromY) * 0.75 + (Math.random() * 50 - 25);
+
+      // Funcao cubica de Bezier
+      const cubicBezier = (t, p0, p1, p2, p3) => {
+        const u = 1 - t;
+        return (
+          u * u * u * p0 +
+          3 * u * u * t * p1 +
+          3 * u * t * t * p2 +
+          t * t * t * p3
+        );
+      };
+
+      // Executar movimento suave
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+
+        // Ease in/out para movimento mais natural
+        const easeT = t < 0.5
+          ? 2 * t * t
+          : -1 + (4 - 2 * t) * t;
+
+        const x = Math.round(cubicBezier(easeT, fromX, controlX1, controlX2, toX));
+        const y = Math.round(cubicBezier(easeT, fromY, controlY1, controlY2, toY));
+
+        await page.mouse.move(x, y);
+        await page.waitForTimeout(stepDuration + Math.random() * 10);
+      }
+    }
+
+    console.log(`   Movimento de mouse concluido`);
+    return { success: true };
+
+  } catch (error) {
+    console.error(`   ERRO ao executar MOUSE_MOVE: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// FUNCAO CHECK_ROLLOVER - Verificacao de rollover em tempo real
+// ============================================
+
+async function handleCheckRollover(page, action) {
+  const {
+    selector,
+    minValue = 0,
+    maxValue = Infinity,
+    stopIfBelow = false,
+    format = 'decimal' // 'decimal', 'currency', 'percentage'
+  } = action;
+
+  console.log(`   CHECK_ROLLOVER: Min=${minValue}, Max=${maxValue}, StopIfBelow=${stopIfBelow}`);
+
+  try {
+    const selectorValue = sanitizeSelectorValue(selector);
+
+    if (!selectorValue) {
+      throw new Error('Seletor nao fornecido para check_rollover');
+    }
+
+    // Buscar elemento
+    const element = await page.$(selectorValue);
+
+    if (!element) {
+      console.warn(`   Elemento de rollover nao encontrado: ${selectorValue}`);
+      return { success: false, error: 'Elemento nao encontrado', rollover: null };
+    }
+
+    // Extrair texto do elemento
+    const text = await page.evaluate(el => el.textContent || el.innerText || '', element);
+    console.log(`   Texto extraido: "${text}"`);
+
+    // Extrair valor numerico usando regex
+    // Remove tudo exceto numeros, ponto e virgula
+    let cleanText = text.replace(/[^\d.,]/g, '');
+
+    // Converter virgula para ponto (formato BR -> US)
+    cleanText = cleanText.replace(',', '.');
+
+    const rolloverValue = parseFloat(cleanText);
+
+    if (isNaN(rolloverValue)) {
+      console.warn(`   Nao foi possivel extrair valor numerico de: "${text}"`);
+      return { success: false, error: 'Valor nao numerico', rollover: null };
+    }
+
+    console.log(`   Rollover atual: ${rolloverValue}`);
+    console.log(`   Rollover minimo: ${minValue}`);
+    console.log(`   Rollover maximo: ${maxValue}`);
+
+    // Verificar se esta dentro do range
+    const isAboveMin = rolloverValue >= minValue;
+    const isBelowMax = rolloverValue <= maxValue;
+    const isValid = isAboveMin && isBelowMax;
+
+    if (isValid) {
+      console.log(`   ✓ Rollover valido! Continuando execucao...`);
+      return { success: true, rollover: rolloverValue, valid: true };
+    } else {
+      if (!isAboveMin) {
+        console.warn(`   ✗ Rollover abaixo do minimo (${rolloverValue} < ${minValue})`);
+
+        if (stopIfBelow) {
+          throw new Error(`Rollover abaixo do minimo: ${rolloverValue} < ${minValue}`);
+        }
+      }
+
+      if (!isBelowMax) {
+        console.warn(`   ✗ Rollover acima do maximo (${rolloverValue} > ${maxValue})`);
+      }
+
+      return { success: true, rollover: rolloverValue, valid: false };
+    }
+
+  } catch (error) {
+    console.error(`   ERRO ao verificar rollover: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// FUNCAO WITHDRAW - Saques automaticos
+// ============================================
+
+async function handleWithdraw(page, action) {
+  const {
+    amountSelector,
+    amount,
+    useMaxBalance = false,
+    balanceSelector,
+    submitSelector,
+    confirmSelector,
+    pixSelector,
+    waitAfterSubmit = 3000,
+    verifySuccess = true,
+    successSelector
+  } = action;
+
+  console.log(`   WITHDRAW: Amount=${amount || 'MAX'}, PIX=${pixSelector ? 'sim' : 'nao'}`);
+
+  try {
+    // 1. Se useMaxBalance, extrair saldo disponivel
+    let withdrawAmount = amount;
+
+    if (useMaxBalance && balanceSelector) {
+      console.log(`   Buscando saldo maximo disponivel...`);
+      const balanceSelectorValue = sanitizeSelectorValue(balanceSelector);
+      const balanceElement = await page.$(balanceSelectorValue);
+
+      if (balanceElement) {
+        const balanceText = await page.evaluate(el => el.textContent || el.innerText || '', balanceElement);
+        const cleanBalance = balanceText.replace(/[^\d.,]/g, '').replace(',', '.');
+        withdrawAmount = parseFloat(cleanBalance);
+        console.log(`   Saldo disponivel: R$ ${withdrawAmount}`);
+      } else {
+        console.warn(`   Seletor de saldo nao encontrado, usando valor fixo`);
+      }
+    }
+
+    // 2. Se fornecido, selecionar chave PIX
+    if (pixSelector) {
+      console.log(`   Selecionando chave PIX...`);
+      const macroVars = await getMacroVars(page);
+      const pixKey = macroVars.pixKey;
+
+      if (pixKey) {
+        const pixSelectorValue = sanitizeSelectorValue(pixSelector);
+        const pixElement = await page.$(pixSelectorValue);
+
+        if (pixElement) {
+          await pixElement.click();
+          await page.waitForTimeout(300);
+
+          // Tentar digitar chave PIX
+          await page.keyboard.type(pixKey);
+          console.log(`   Chave PIX digitada: ${pixKey.substring(0, 10)}...`);
+          await page.waitForTimeout(500);
+        }
+      } else {
+        console.warn(`   Chave PIX nao fornecida nas variaveis do macro`);
+      }
+    }
+
+    // 3. Preencher valor do saque
+    if (amountSelector && withdrawAmount) {
+      console.log(`   Preenchendo valor: R$ ${withdrawAmount}`);
+      const amountSelectorValue = sanitizeSelectorValue(amountSelector);
+      const amountElement = await page.$(amountSelectorValue);
+
+      if (amountElement) {
+        await amountElement.click();
+        await page.waitForTimeout(300);
+
+        // Limpar campo
+        await page.keyboard.down('Control');
+        await page.keyboard.press('KeyA');
+        await page.keyboard.up('Control');
+        await page.keyboard.press('Backspace');
+
+        // Digitar valor
+        await page.keyboard.type(withdrawAmount.toString());
+        console.log(`   Valor digitado: ${withdrawAmount}`);
+        await page.waitForTimeout(500);
+      }
+    }
+
+    // 4. Clicar no botao de submissao
+    if (submitSelector) {
+      console.log(`   Clicando em botao de saque...`);
+      const submitSelectorValue = sanitizeSelectorValue(submitSelector);
+      const submitButton = await page.$(submitSelectorValue);
+
+      if (submitButton) {
+        await submitButton.click();
+        console.log(`   Botao de saque clicado`);
+        await page.waitForTimeout(waitAfterSubmit);
+      } else {
+        throw new Error('Botao de saque nao encontrado');
+      }
+    }
+
+    // 5. Se houver confirmacao adicional
+    if (confirmSelector) {
+      console.log(`   Confirmando saque...`);
+      const confirmSelectorValue = sanitizeSelectorValue(confirmSelector);
+      const confirmButton = await page.$(confirmSelectorValue);
+
+      if (confirmButton) {
+        await confirmButton.click();
+        console.log(`   Confirmacao clicada`);
+        await page.waitForTimeout(2000);
+      }
+    }
+
+    // 6. Verificar sucesso (se fornecido seletor)
+    if (verifySuccess && successSelector) {
+      console.log(`   Verificando sucesso...`);
+      const successSelectorValue = sanitizeSelectorValue(successSelector);
+
+      await page.waitForTimeout(2000);
+      const successElement = await page.$(successSelectorValue);
+
+      if (successElement) {
+        console.log(`   ✓ Saque realizado com sucesso!`);
+        return { success: true, amount: withdrawAmount };
+      } else {
+        console.warn(`   ? Nao foi possivel verificar sucesso do saque`);
+        return { success: true, amount: withdrawAmount, verified: false };
+      }
+    }
+
+    console.log(`   Saque concluido`);
+    return { success: true, amount: withdrawAmount };
+
+  } catch (error) {
+    console.error(`   ERRO ao executar saque: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// FUNCAO REOPEN_ACCOUNT - Reabertura automatica de contas
+// ============================================
+
+async function handleReopenAccount(page, action) {
+  const {
+    errorSelectors = [],
+    errorKeywords = [
+      'bloqueado',
+      'bloqueada',
+      'fechada',
+      'suspensa',
+      'desativada',
+      'conta inativa',
+      'account closed',
+      'account blocked',
+      'account suspended'
+    ],
+    reopenUrl,
+    reopenActions = [],
+    maxRetries = 3,
+    retryDelay = 5000
+  } = action;
+
+  console.log(`   REOPEN_ACCOUNT: Max retries=${maxRetries}`);
+
+  try {
+    // 1. Detectar se a conta esta bloqueada/fechada
+    console.log(`   Verificando status da conta...`);
+
+    let accountClosed = false;
+
+    // Verificar por seletores de erro
+    for (const selector of errorSelectors) {
+      const selectorValue = sanitizeSelectorValue(selector);
+      const errorElement = await page.$(selectorValue);
+
+      if (errorElement) {
+        const errorText = await page.evaluate(el => el.textContent || el.innerText || '', errorElement);
+        console.log(`   Erro encontrado: "${errorText}"`);
+        accountClosed = true;
+        break;
+      }
+    }
+
+    // Verificar por palavras-chave na pagina
+    if (!accountClosed) {
+      const pageText = await page.evaluate(() => document.body.innerText);
+
+      for (const keyword of errorKeywords) {
+        if (pageText.toLowerCase().includes(keyword.toLowerCase())) {
+          console.log(`   Palavra-chave de erro encontrada: "${keyword}"`);
+          accountClosed = true;
+          break;
+        }
+      }
+    }
+
+    if (!accountClosed) {
+      console.log(`   ✓ Conta parece estar ativa. Nenhuma acao necessaria.`);
+      return { success: true, reopened: false, reason: 'Account active' };
+    }
+
+    // 2. Conta esta fechada, tentar reabrir
+    console.warn(`   ✗ Conta detectada como fechada/bloqueada!`);
+    console.log(`   Tentando reabrir conta...`);
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      console.log(`   Tentativa ${attempt}/${maxRetries}...`);
+
+      try {
+        // Se fornecida URL de reabertura, navegar
+        if (reopenUrl) {
+          console.log(`   Navegando para: ${reopenUrl}`);
+          await page.goto(reopenUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+          await page.waitForTimeout(2000);
+        }
+
+        // Executar acoes de reabertura
+        if (reopenActions.length > 0) {
+          console.log(`   Executando ${reopenActions.length} acoes de reabertura...`);
+
+          for (const reopenAction of reopenActions) {
+            await executeAction(page, reopenAction, null);
+            await page.waitForTimeout(500);
+          }
+        }
+
+        // Aguardar e verificar se funcionou
+        await page.waitForTimeout(retryDelay);
+
+        // Verificar novamente
+        let stillClosed = false;
+
+        for (const selector of errorSelectors) {
+          const selectorValue = sanitizeSelectorValue(selector);
+          const errorElement = await page.$(selectorValue);
+          if (errorElement) {
+            stillClosed = true;
+            break;
+          }
+        }
+
+        if (!stillClosed) {
+          const pageText = await page.evaluate(() => document.body.innerText);
+          for (const keyword of errorKeywords) {
+            if (pageText.toLowerCase().includes(keyword.toLowerCase())) {
+              stillClosed = true;
+              break;
+            }
+          }
+        }
+
+        if (!stillClosed) {
+          console.log(`   ✓ Conta reaberta com sucesso na tentativa ${attempt}!`);
+          return { success: true, reopened: true, attempts: attempt };
+        } else {
+          console.warn(`   Tentativa ${attempt} falhou. Conta ainda fechada.`);
+        }
+
+      } catch (error) {
+        console.error(`   Erro na tentativa ${attempt}: ${error.message}`);
+      }
+    }
+
+    // Se chegou aqui, todas as tentativas falharam
+    console.error(`   ✗ Nao foi possivel reabrir a conta apos ${maxRetries} tentativas`);
+    return { success: false, error: 'Max retries exceeded', attempts: maxRetries };
+
+  } catch (error) {
+    console.error(`   ERRO ao executar REOPEN_ACCOUNT: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// FUNCAO COLLECT_BONUS - Modo coleta ativa de bonus
+// ============================================
+
+async function handleCollectBonus(page, action) {
+  const {
+    searchSelectors = [],
+    clickSelectors = [],
+    keywords = [
+      'pegar bonus',
+      'resgatar',
+      'ativar bonus',
+      'claim bonus',
+      'get bonus',
+      'bonus disponivel'
+    ],
+    waitAfterCollect = 2000,
+    maxBonus = 5,
+    scrollToFind = true
+  } = action;
+
+  console.log(`   COLLECT_BONUS: Max bonus=${maxBonus}, Scroll=${scrollToFind}`);
+
+  try {
+    let bonusCollected = 0;
+
+    // 1. Buscar elementos de bonus na pagina
+    console.log(`   Procurando elementos de bonus...`);
+
+    // Primeiro tentar por seletores fornecidos
+    let bonusElements = [];
+
+    for (const selector of searchSelectors) {
+      const selectorValue = sanitizeSelectorValue(selector);
+      const elements = await page.$$(selectorValue);
+      bonusElements.push(...elements);
+    }
+
+    // Depois tentar por keywords em botoes/links
+    if (bonusElements.length === 0) {
+      console.log(`   Buscando por palavras-chave...`);
+
+      bonusElements = await page.evaluate((kws) => {
+        const elements = [];
+        const allButtons = Array.from(document.querySelectorAll('button, a, [role="button"], [class*="btn"]'));
+
+        for (const btn of allButtons) {
+          const text = (btn.textContent || btn.innerText || '').toLowerCase();
+
+          for (const keyword of kws) {
+            if (text.includes(keyword.toLowerCase())) {
+              elements.push({
+                selector: btn.className ? `.${btn.className.split(' ')[0]}` : btn.tagName.toLowerCase(),
+                text: btn.textContent || btn.innerText
+              });
+              break;
+            }
+          }
+        }
+
+        return elements;
+      }, keywords);
+
+      console.log(`   Encontrados ${bonusElements.length} elementos com palavras-chave`);
+    }
+
+    if (bonusElements.length === 0 && clickSelectors.length > 0) {
+      // Tentar com seletores de clique
+      for (const selector of clickSelectors) {
+        const selectorValue = sanitizeSelectorValue(selector);
+        const elements = await page.$$(selectorValue);
+        bonusElements.push(...elements);
+      }
+    }
+
+    console.log(`   Total de bonus encontrados: ${bonusElements.length}`);
+
+    if (bonusElements.length === 0) {
+      console.log(`   Nenhum bonus disponivel no momento`);
+      return { success: true, collected: 0, reason: 'No bonus found' };
+    }
+
+    // 2. Coletar bonus ate o limite
+    const limit = Math.min(bonusElements.length, maxBonus);
+
+    for (let i = 0; i < limit; i++) {
+      try {
+        const element = bonusElements[i];
+
+        // Se for elemento Puppeteer direto
+        if (element.click && typeof element.click === 'function') {
+          console.log(`   Coletando bonus ${i + 1}/${limit}...`);
+
+          // Scroll para o elemento se necessario
+          if (scrollToFind) {
+            await page.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), element);
+            await page.waitForTimeout(500);
+          }
+
+          await element.click();
+          console.log(`   ✓ Bonus ${i + 1} coletado!`);
+          bonusCollected++;
+
+          await page.waitForTimeout(waitAfterCollect);
+        }
+        // Se for objeto com seletor (do evaluate)
+        else if (element.selector) {
+          console.log(`   Tentando coletar bonus: "${element.text}"`);
+
+          const btn = await page.$(element.selector);
+          if (btn) {
+            if (scrollToFind) {
+              await page.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), btn);
+              await page.waitForTimeout(500);
+            }
+
+            await btn.click();
+            console.log(`   ✓ Bonus coletado!`);
+            bonusCollected++;
+
+            await page.waitForTimeout(waitAfterCollect);
+          }
+        }
+
+      } catch (error) {
+        console.warn(`   Erro ao coletar bonus ${i + 1}: ${error.message}`);
+      }
+    }
+
+    console.log(`   Total de bonus coletados: ${bonusCollected}/${limit}`);
+    return { success: true, collected: bonusCollected, available: bonusElements.length };
+
+  } catch (error) {
+    console.error(`   ERRO ao executar COLLECT_BONUS: ${error.message}`);
+    return { success: false, error: error.message };
   }
 }
 
