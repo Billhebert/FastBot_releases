@@ -1,6 +1,6 @@
 {
   "name": "Fastbot",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Sistema de automação com grid de 10 navegadores e integração OpenCode SDK para ações generalistas via LLM.",
   "main": "src/main/main.js",
   "scripts": {
@@ -56,7 +56,7 @@
       }
     ],
     "win": {
-      "target": "nsis",
+      "target": "portable",
       "icon": "icons/logo.ico"
     },
     "mac": {
