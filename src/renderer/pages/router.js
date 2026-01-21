@@ -2,9 +2,9 @@
 
 const ROUTER_PERMISSIONS =
   window.APP_PERMISSIONS || {
-    dev: ["pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links", "dashboard", "admin", "scheduler"],
+    dev: ["pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links", "dashboard", "admin"],
     creator: ["pix", "settings", "pix-generator", "dashboard"],
-    consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas", "referral-links", "dashboard", "scheduler"],
+    consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas", "referral-links", "dashboard"],
   };
 
 const APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
@@ -134,7 +134,6 @@ function createMenu(userOverride) {
   const navStructure = [
     { page: 'dashboard', label: 'Dashboard' },
     { page: 'execute', label: 'Executar' },
-    { page: 'scheduler', label: 'Agendamento' },
     { page: 'contas', label: 'Contas' },
     { page: 'passwords', label: 'Senhas' },
     { page: 'pix', label: 'Chaves PIX' },
