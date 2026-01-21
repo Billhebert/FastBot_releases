@@ -432,44 +432,64 @@
     }
 
     async function fetchExecutions(startDate) {
-      const { data, error } = await supabaseClient
-        .from('macro_executions')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .gte('created_at', startDate)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabaseClient
+          .from('macro_executions')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .gte('created_at', startDate)
+          .order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch (e) {
+        console.warn('Tabela macro_executions não encontrada:', e);
+        return [];
+      }
     }
 
     async function fetchRegistrations(startDate) {
-      const { data, error } = await supabaseClient
-        .from('registrations')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .gte('created_at', startDate)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabaseClient
+          .from('registrations')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .gte('created_at', startDate)
+          .order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch (e) {
+        console.warn('Tabela registrations não encontrada:', e);
+        return [];
+      }
     }
 
     async function fetchReferralLinks() {
-      const { data, error } = await supabaseClient
-        .from('referral_links')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('usage_count', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabaseClient
+          .from('referral_links')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('usage_count', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch (e) {
+        console.warn('Tabela referral_links não encontrada:', e);
+        return [];
+      }
     }
 
     async function fetchMacros() {
-      const { data, error } = await supabaseClient
-        .from('macros')
-        .select('*')
-        .eq('user_id', currentUser.id);
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabaseClient
+          .from('macros')
+          .select('*')
+          .eq('user_id', currentUser.id);
+        if (error) return [];
+        return data || [];
+      } catch (e) {
+        console.warn('Tabela macros não encontrada:', e);
+        return [];
+      }
     }
 
     function updateStatistics() {
