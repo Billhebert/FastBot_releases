@@ -20,6 +20,7 @@
   "author": "",
   "license": "Proprietary",
   "dependencies": {
+    "@opencode-ai/sdk": "^1.1.28",
     "@supabase/supabase-js": "^2.39.0",
     "adm-zip": "^0.5.16",
     "axios": "^1.13.2",

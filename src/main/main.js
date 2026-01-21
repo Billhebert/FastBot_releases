@@ -40,8 +40,108 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+  }
+});
+
+// ============================================
+// BROWSER GRID HANDLERS
+// ============================================
+
+let browserGridManager = null;
+
+async function getBrowserGridManager() {
+  if (!browserGridManager) {
+    const BrowserGridManager = require('../core/browser-grid-manager.js');
+    browserGridManager = new BrowserGridManager();
+    await browserGridManager.init();
+  }
+  return browserGridManager;
+}
+
+ipcMain.handle('open-browser-grid', async (event, config) => {
+  console.log('========================================');
+  console.log(' main.js: OPEN BROWSER GRID');
+  console.log(' Config:', config);
+  console.log('========================================');
+  
+  try {
+    const manager = await getBrowserGridManager();
+    const result = await manager.openBrowserGrid(config);
+    console.log(' Result:', result);
+    return result;
+  } catch (error) {
+    console.error(' Erro ao abrir grid:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-browser-html', async (event, config) => {
+  console.log(' main.js: GET BROWSER HTML');
+  console.log(' Config:', config);
+  
+  try {
+    const manager = await getBrowserGridManager();
+    const html = await manager.getBrowserHTML(config.browserId);
+    return { success: true, html };
+  } catch (error) {
+    console.error(' Erro ao capturar HTML:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('execute-llm-action', async (event, config) => {
+  console.log('========================================');
+  console.log(' main.js: EXECUTE LLM ACTION');
+  console.log(' Config:', config);
+  console.log('========================================');
+  
+  try {
+    const manager = await getBrowserGridManager();
+    const result = await manager.executeLLMAction(config);
+    console.log(' Result:', result);
+    return result;
+  } catch (error) {
+    console.error(' Erro ao executar acao:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('close-browser', async (event, config) => {
+  console.log(' main.js: CLOSE BROWSER');
+  console.log(' Config:', config);
+  
+  try {
+    const manager = await getBrowserGridManager();
+    
+    if (config.all === true) {
+      const result = await manager.closeAllBrowsers();
+      console.log(' Todos os browsers fechados');
+      return result;
+    } else {
+      const result = await manager.closeBrowser(config.browserId);
+      console.log(' Browser ' + config.browserId + ' fechado');
+      return result;
     }
-  });
+  } catch (error) {
+    console.error(' Erro ao fechar browser:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-grid-status', async (event) => {
+  console.log(' main.js: GET GRID STATUS');
+  
+  try {
+    const manager = await getBrowserGridManager();
+    const status = await manager.getGridStatus();
+    console.log(' Status:', status);
+    return status;
+  } catch (error) {
+    console.error(' Erro ao obter status:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 });
 
 app.on('window-all-closed', () => {

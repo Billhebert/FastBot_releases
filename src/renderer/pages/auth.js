@@ -2,9 +2,9 @@
 // Usa apenas tabela users normal
 
 const PERMISSIONS = {
-  dev: ["macros", "pix", "proxies", "passwords", "execute"],
-  creator: ["macros", "pix"],
-  consumer: ["proxies", "passwords", "pix", "execute"],
+  dev: ["pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links", "dashboard", "admin", "scheduler"],
+  creator: ["pix", "settings", "pix-generator", "dashboard"],
+  consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas", "referral-links", "dashboard", "scheduler"],
 };
 
 window.APP_PERMISSIONS = PERMISSIONS;

@@ -2,8 +2,8 @@
 
 const ROUTER_PERMISSIONS =
   window.APP_PERMISSIONS || {
-    dev: ["macros", "pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links", "dashboard", "admin", "scheduler"],
-    creator: ["macros", "pix", "settings", "pix-generator", "dashboard"],
+    dev: ["pix", "proxies", "passwords", "execute", "settings", "pix-generator", "contas", "dolphin", "telas", "referral-links", "dashboard", "admin", "scheduler"],
+    creator: ["pix", "settings", "pix-generator", "dashboard"],
     consumer: ["proxies", "passwords", "pix", "execute", "contas", "settings", "pix-generator", "dolphin", "telas", "referral-links", "dashboard", "scheduler"],
   };
 
@@ -133,7 +133,6 @@ function createMenu(userOverride) {
 
   const navStructure = [
     { page: 'dashboard', label: 'Dashboard' },
-    { page: 'macros', label: user.role === 'dev' ? 'Criar macros' : 'Inicio' },
     { page: 'execute', label: 'Executar' },
     { page: 'scheduler', label: 'Agendamento' },
     { page: 'contas', label: 'Contas' },

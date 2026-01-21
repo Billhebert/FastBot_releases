@@ -147,142 +147,107 @@
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <aside class="sidebar" id="sidebar"></aside>
+  <div id="menu-container"></div>
 
-    <main class="main-content">
-      <header class="titlebar" id="titlebar"></header>
+  <div class="workspace">
+    <header class="workspace-header">
+      <div>
+        <p class="title">Configurações de APIs</p>
+        <p class="meta">Gerencie suas chaves e integrações</p>
+      </div>
+    </header>
 
-      <div class="settings-container">
-        <h1 style="color: #d4af37; margin-bottom: 30px;">⚙️ Configurações de APIs</h1>
+    <div class="settings-container">
+      <!-- SMS24h Configuration -->
+      <div class="settings-section">
+        <h2>SMS24h - Números Temporários</h2>
 
-        <!-- SMS24h Configuration -->
-        <div class="settings-section">
-          <h2>📱 SMS24h - Números Temporários</h2>
-
-          <div class="info-box">
-            <p>💡 <strong>Para que serve:</strong> Gerar chaves PIX automaticamente usando números temporários</p>
-            <p>🔗 Obter API Key: <a href="https://sms24h.com/" target="_blank">https://sms24h.com/</a></p>
-            <p>📖 Documentação: Acesse "API" → "Gerar API Key" no painel</p>
-          </div>
-
-          <div class="form-group">
-            <label for="sms24h-api-key">
-              API Key SMS24h
-              <span id="sms24h-status"></span>
-            </label>
-            <input
-              type="password"
-              id="sms24h-api-key"
-              placeholder="Cole sua API Key aqui..."
-              autocomplete="off"
-            />
-            <small>Mantenha em segredo. Nunca compartilhe sua API Key.</small>
-          </div>
-
-          <div class="form-group">
-            <label for="sms24h-timeout">Timeout para receber SMS (segundos)</label>
-            <input
-              type="number"
-              id="sms24h-timeout"
-              value="300"
-              min="60"
-              max="600"
-            />
-            <small>Tempo máximo de espera para receber código SMS (padrão: 300s = 5 min)</small>
-          </div>
-
-          <div class="btn-group">
-            <button class="btn btn-test" id="btn-test-sms24h">🧪 Testar Conexão</button>
-            <button class="btn btn-save" id="btn-save-sms24h">💾 Salvar</button>
-          </div>
+        <div class="info-box">
+          <p>Para que serve: Gerar chaves PIX automaticamente usando números temporários</p>
+          <p>Obter API Key: <a href="https://sms24h.com/" target="_blank">https://sms24h.com/</a></p>
         </div>
 
-        <!-- Mercado Pago Configuration -->
-        <div class="settings-section">
-          <h2>💳 Mercado Pago - Geração de PIX</h2>
-
-          <div class="info-box">
-            <p>💡 <strong>Para que serve:</strong> Criar contas e gerar chaves PIX automaticamente</p>
-            <p>🔗 Obter Access Token: <a href="https://www.mercadopago.com.br/developers" target="_blank">https://www.mercadopago.com.br/developers</a></p>
-            <p>📖 Documentação: Acesse "Suas aplicações" → "Criar aplicação" → "Credenciais de produção"</p>
-          </div>
-
-          <div class="form-group">
-            <label for="mp-access-token">
-              Access Token Mercado Pago
-              <span id="mp-status"></span>
-            </label>
-            <input
-              type="password"
-              id="mp-access-token"
-              placeholder="Cole seu Access Token aqui..."
-              autocomplete="off"
-            />
-            <small>Token de produção. Necessário para criar contas e chaves PIX.</small>
-          </div>
-
-          <div class="btn-group">
-            <button class="btn btn-test" id="btn-test-mp">🧪 Testar Conexão</button>
-            <button class="btn btn-save" id="btn-save-mp">💾 Salvar</button>
-          </div>
+        <div class="form-group">
+          <label for="sms24h-api-key">
+            API Key SMS24h
+            <span id="sms24h-status"></span>
+          </label>
+          <input type="password" id="sms24h-api-key" placeholder="Cole sua API Key aqui..." autocomplete="off" />
+          <small>Mantenha em segredo. Nunca compartilhe sua API Key.</small>
         </div>
 
-        <!-- Dolphin Anty Configuration -->
-        <div class="settings-section">
-          <h2>🐬 Dolphin Anty - Perfis Isolados</h2>
+        <div class="form-group">
+          <label for="sms24h-timeout">Timeout para receber SMS (segundos)</label>
+          <input type="number" id="sms24h-timeout" value="300" min="60" max="600" />
+          <small>Tempo máximo de espera para receber código SMS (padrão: 300s = 5 min)</small>
+        </div>
 
-          <div class="info-box">
-            <p>💡 <strong>Para que serve:</strong> Usar perfis isolados do Dolphin Anty com o FastBot</p>
-            <p>🔗 Download: <a href="https://dolphin-anty.com/" target="_blank">https://dolphin-anty.com/</a></p>
-            <p>📖 Documentação: Instale o Dolphin, crie perfis e mantenha rodando em background</p>
-          </div>
-
-          <div class="form-group">
-            <label for="dolphin-host">
-              Host Dolphin Anty
-              <span id="dolphin-status"></span>
-            </label>
-            <input
-              type="text"
-              id="dolphin-host"
-              value="localhost"
-              placeholder="localhost ou IP"
-            />
-            <small>Endereço onde o Dolphin Anty está rodando (padrão: localhost)</small>
-          </div>
-
-          <div class="form-group">
-            <label for="dolphin-port">Porta da API Local</label>
-            <input
-              type="number"
-              id="dolphin-port"
-              value="3001"
-              min="1"
-              max="65535"
-            />
-            <small>Porta da API local do Dolphin (padrão: 3001)</small>
-          </div>
-
-          <div class="form-group">
-            <label for="dolphin-min-profiles">Mínimo de Perfis Necessários</label>
-            <input
-              type="number"
-              id="dolphin-min-profiles"
-              value="20"
-              min="1"
-              max="100"
-            />
-            <small>Alerta se tiver menos perfis que isso (recomendado: 20+)</small>
-          </div>
-
-          <div class="btn-group">
-            <button class="btn btn-test" id="btn-test-dolphin">🧪 Testar Conexão</button>
-            <button class="btn btn-save" id="btn-save-dolphin">💾 Salvar</button>
-          </div>
+        <div class="btn-group">
+          <button class="btn btn-test" id="btn-test-sms24h">Testar Conexão</button>
+          <button class="btn btn-save" id="btn-save-sms24h">Salvar</button>
         </div>
       </div>
-    </main>
+
+      <!-- Mercado Pago Configuration -->
+      <div class="settings-section">
+        <h2>Mercado Pago - Geração de PIX</h2>
+
+        <div class="info-box">
+          <p>Para que serve: Criar contas e gerar chaves PIX automaticamente</p>
+          <p>Obter Access Token: <a href="https://www.mercadopago.com.br/developers" target="_blank">https://www.mercadopago.com.br/developers</a></p>
+        </div>
+
+        <div class="form-group">
+          <label for="mp-access-token">
+            Access Token Mercado Pago
+            <span id="mp-status"></span>
+          </label>
+          <input type="password" id="mp-access-token" placeholder="Cole seu Access Token aqui..." autocomplete="off" />
+          <small>Token de produção. Necessário para criar contas e chaves PIX.</small>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-test" id="btn-test-mp">Testar Conexão</button>
+          <button class="btn btn-save" id="btn-save-mp">Salvar</button>
+        </div>
+      </div>
+
+      <!-- Dolphin Anty Configuration -->
+      <div class="settings-section">
+        <h2>Dolphin Anty - Perfis Isolados</h2>
+
+        <div class="info-box">
+          <p>Para que serve: Usar perfis isolados do Dolphin Anty com o FastBot</p>
+          <p>Download: <a href="https://dolphin-anty.com/" target="_blank">https://dolphin-anty.com/</a></p>
+        </div>
+
+        <div class="form-group">
+          <label for="dolphin-host">
+            Host Dolphin Anty
+            <span id="dolphin-status"></span>
+          </label>
+          <input type="text" id="dolphin-host" value="localhost" placeholder="localhost ou IP" />
+          <small>Endereço onde o Dolphin Anty está rodando (padrão: localhost)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="dolphin-port">Porta da API Local</label>
+          <input type="number" id="dolphin-port" value="3001" min="1" max="65535" />
+          <small>Porta da API local do Dolphin (padrão: 3001)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="dolphin-min-profiles">Mínimo de Perfis Necessários</label>
+          <input type="number" id="dolphin-min-profiles" value="20" min="1" max="100" />
+          <small>Alerta se tiver menos perfis que isso (recomendado: 20+)</small>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-test" id="btn-test-dolphin">Testar Conexão</button>
+          <button class="btn btn-save" id="btn-save-dolphin">Salvar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -291,8 +256,16 @@
   <script src="auth.js"></script>
   <script src="router.js"></script>
   <script>
-    // Carregar configurações salvas
-    async function loadSettings() {
+    let currentUser = null;
+
+    async function init() {
+      currentUser = await requirePagePermission("settings");
+      if (!currentUser) return;
+      document.getElementById("menu-container").innerHTML = createMenu(currentUser);
+      loadSettings();
+    }
+
+    function loadSettings() {
       const sms24hKey = localStorage.getItem('sms24h_api_key') || '';
       const sms24hTimeout = localStorage.getItem('sms24h_timeout') || '300';
       const mpToken = localStorage.getItem('mp_access_token') || '';
@@ -307,7 +280,6 @@
       document.getElementById('dolphin-port').value = dolphinPort;
       document.getElementById('dolphin-min-profiles').value = dolphinMinProfiles;
 
-      // Verificar status
       updateStatus('sms24h', sms24hKey ? 'warning' : 'error', sms24hKey ? 'Não testado' : 'Não configurado');
       updateStatus('mp', mpToken ? 'warning' : 'error', mpToken ? 'Não testado' : 'Não configurado');
       updateStatus('dolphin', dolphinHost && dolphinPort ? 'warning' : 'error', 'Não testado');
@@ -319,7 +291,6 @@
       statusEl.textContent = message;
     }
 
-    // Salvar SMS24h
     document.getElementById('btn-save-sms24h').addEventListener('click', () => {
       const apiKey = document.getElementById('sms24h-api-key').value.trim();
       const timeout = document.getElementById('sms24h-timeout').value;
@@ -333,10 +304,9 @@
       localStorage.setItem('sms24h_timeout', timeout);
 
       updateStatus('sms24h', 'warning', 'Salvo - Não testado');
-      showNotification('✅ SMS24h configurado com sucesso', 'success');
+      showNotification('SMS24h configurado com sucesso', 'success');
     });
 
-    // Testar SMS24h
     document.getElementById('btn-test-sms24h').addEventListener('click', async () => {
       const apiKey = document.getElementById('sms24h-api-key').value.trim();
 
@@ -346,28 +316,26 @@
       }
 
       updateStatus('sms24h', 'warning', 'Testando...');
-      showNotification('🧪 Testando conexão SMS24h...', 'info');
+      showNotification('Testando conexão SMS24h...', 'info');
 
       try {
-        // Testar via backend (criar função helper se necessário)
         const SMS24hClient = require('../../core/sms24h-client');
         const client = new SMS24hClient(apiKey);
         const result = await client.getBalance();
 
         if (result.success) {
-          updateStatus('sms24h', 'success', `✓ OK - Saldo: R$ ${result.balance}`);
-          showNotification(`✅ SMS24h conectado! Saldo: R$ ${result.balance}`, 'success');
+          updateStatus('sms24h', 'success', 'OK - Saldo: R$ ' + result.balance);
+          showNotification('SMS24h conectado! Saldo: R$ ' + result.balance, 'success');
         } else {
           updateStatus('sms24h', 'error', 'Erro na conexão');
-          showNotification(`❌ Erro: ${result.error}`, 'error');
+          showNotification('Erro: ' + result.error, 'error');
         }
       } catch (error) {
         updateStatus('sms24h', 'error', 'Erro na conexão');
-        showNotification(`❌ Erro: ${error.message}`, 'error');
+        showNotification('Erro: ' + error.message, 'error');
       }
     });
 
-    // Salvar Mercado Pago
     document.getElementById('btn-save-mp').addEventListener('click', () => {
       const token = document.getElementById('mp-access-token').value.trim();
 
@@ -377,12 +345,10 @@
       }
 
       localStorage.setItem('mp_access_token', token);
-
       updateStatus('mp', 'warning', 'Salvo - Não testado');
-      showNotification('✅ Mercado Pago configurado com sucesso', 'success');
+      showNotification('Mercado Pago configurado com sucesso', 'success');
     });
 
-    // Testar Mercado Pago
     document.getElementById('btn-test-mp').addEventListener('click', async () => {
       const token = document.getElementById('mp-access-token').value.trim();
 
@@ -392,7 +358,7 @@
       }
 
       updateStatus('mp', 'warning', 'Testando...');
-      showNotification('🧪 Testando conexão Mercado Pago...', 'info');
+      showNotification('Testando conexão Mercado Pago...', 'info');
 
       try {
         const MercadoPagoClient = require('../../core/mercadopago-client');
@@ -400,19 +366,18 @@
         const result = await client.getAccount();
 
         if (result.success) {
-          updateStatus('mp', 'success', `✓ OK - ${result.account.email}`);
-          showNotification(`✅ Mercado Pago conectado! Email: ${result.account.email}`, 'success');
+          updateStatus('mp', 'success', 'OK - ' + result.account.email);
+          showNotification('Mercado Pago conectado! Email: ' + result.account.email, 'success');
         } else {
           updateStatus('mp', 'error', 'Erro na conexão');
-          showNotification(`❌ Erro: ${result.error}`, 'error');
+          showNotification('Erro: ' + result.error, 'error');
         }
       } catch (error) {
         updateStatus('mp', 'error', 'Erro na conexão');
-        showNotification(`❌ Erro: ${error.message}`, 'error');
+        showNotification('Erro: ' + error.message, 'error');
       }
     });
 
-    // Salvar Dolphin
     document.getElementById('btn-save-dolphin').addEventListener('click', () => {
       const host = document.getElementById('dolphin-host').value.trim();
       const port = document.getElementById('dolphin-port').value;
@@ -428,10 +393,9 @@
       localStorage.setItem('dolphin_min_profiles', minProfiles);
 
       updateStatus('dolphin', 'warning', 'Salvo - Não testado');
-      showNotification('✅ Dolphin Anty configurado com sucesso', 'success');
+      showNotification('Dolphin Anty configurado com sucesso', 'success');
     });
 
-    // Testar Dolphin
     document.getElementById('btn-test-dolphin').addEventListener('click', async () => {
       const host = document.getElementById('dolphin-host').value.trim();
       const port = document.getElementById('dolphin-port').value;
@@ -442,7 +406,7 @@
       }
 
       updateStatus('dolphin', 'warning', 'Testando...');
-      showNotification('🧪 Testando conexão Dolphin Anty...', 'info');
+      showNotification('Testando conexão Dolphin Anty...', 'info');
 
       try {
         const DolphinClient = require('../../core/dolphin-client');
@@ -452,25 +416,24 @@
         if (result.success && result.running) {
           const profiles = await client.listProfiles(1, 100);
           const count = profiles.total || 0;
-          updateStatus('dolphin', 'success', `✓ OK - ${count} perfis`);
-          showNotification(`✅ Dolphin conectado! ${count} perfis disponíveis`, 'success');
+          updateStatus('dolphin', 'success', 'OK - ' + count + ' perfis');
+          showNotification('Dolphin conectado! ' + count + ' perfis disponíveis', 'success');
 
           const minProfiles = parseInt(document.getElementById('dolphin-min-profiles').value);
           if (count < minProfiles) {
-            showNotification(`⚠️ Aviso: Recomendado ter pelo menos ${minProfiles} perfis (você tem ${count})`, 'warning');
+            showNotification('Aviso: Recomendado ter pelo menos ' + minProfiles + ' perfis (você tem ' + count + ')', 'warning');
           }
         } else {
           updateStatus('dolphin', 'error', 'Dolphin não está rodando');
-          showNotification('❌ Dolphin Anty não está rodando. Inicie o aplicativo.', 'error');
+          showNotification('Dolphin Anty não está rodando. Inicie o aplicativo.', 'error');
         }
       } catch (error) {
         updateStatus('dolphin', 'error', 'Erro na conexão');
-        showNotification(`❌ Erro: ${error.message}`, 'error');
+        showNotification('Erro: ' + error.message, 'error');
       }
     });
 
-    // Carregar ao iniciar
-    loadSettings();
+    init();
   </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
+const { ipcRenderer } = require('electron');
 
 const appVersion = (() => {
   try {
@@ -11,7 +11,7 @@ const appVersion = (() => {
   }
 })();
 
-contextBridge.exposeInMainWorld('electronAPI', {
+window.electronAPI = {
   startRecording: (options) => ipcRenderer.invoke('start-recording', options),
   stopRecording: () => ipcRenderer.invoke('stop-recording'),
   executeMacro: (config) => ipcRenderer.invoke('execute-macro', config),
@@ -29,7 +29,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     show: (id) => ipcRenderer.invoke('mobile-shell:show', id),
     focus: (id) => ipcRenderer.invoke('mobile-shell:focus', id),
     close: (id) => ipcRenderer.invoke('mobile-shell:close', id)
+  },
+  browserGrid: {
+    open: (config) => ipcRenderer.invoke('open-browser-grid', config),
+    getHTML: (config) => ipcRenderer.invoke('get-browser-html', config),
+    executeAction: (config) => ipcRenderer.invoke('execute-llm-action', config),
+    close: (config) => ipcRenderer.invoke('close-browser', config),
+    getStatus: () => ipcRenderer.invoke('get-grid-status')
   }
-});
+};
 
-contextBridge.exposeInMainWorld('fastbotVersion', appVersion);
+window.fastbotVersion = appVersion;

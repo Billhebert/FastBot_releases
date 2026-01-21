@@ -271,6 +271,7 @@
   </style>
 </head>
 <body>
+  <div id="menu-container"></div>
   <div class="app-container">
     <aside class="sidebar" id="sidebar"></aside>
 
@@ -550,10 +551,10 @@
 
     // Carregar ao iniciar
     async function init() {
-      currentUser = await getCurrentUser();
-      if (currentUser) {
-        loadPixKeys();
-      }
+      currentUser = await requirePagePermission("pix-generator");
+      if (!currentUser) return;
+      document.getElementById("menu-container").innerHTML = createMenu(currentUser);
+      loadPixKeys();
     }
 
     init();

@@ -1,21 +1,296 @@
 <!DOCTYPE html>
-<html lang=\"pt-BR\">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Executar Macros</title>
+    <title>Executar Navegadores</title>
     <link rel="stylesheet" href="./styles.css" />
     <style>
-      .btn-spinner {
-        transition: all 0.2s ease;
+      .link-config {
+        background: rgba(30, 30, 30, 0.8);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
       }
-      .btn-spinner:hover {
-        background: #d4af37 !important;
-        border-color: #d4af37 !important;
-        color: #1a1a1a !important;
-        transform: scale(1.05);
+
+      .link-config input[type="text"] {
+        flex: 1;
+        padding: 8px 12px;
+        background: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
       }
-      .btn-spinner:active {
-        transform: scale(0.95);
+
+      .link-config input[type="text"]:focus {
+        outline: none;
+        border-color: #d4af37;
+      }
+
+      .spinner-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .spinner-btn {
+        background: #333;
+        border: 1px solid #444;
+        color: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+
+      .spinner-btn:hover {
+        background: #444;
+        transform: scale(1.1);
+      }
+
+      .spinner-value {
+        width: 50px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        color: #fff;
+        background: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 6px;
+      }
+
+      .btn-remove-link {
+        background: rgba(231, 76, 60, 0.2);
+        border: 1px solid #e74c3c;
+        color: #e74c3c;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      .btn-remove-link:hover {
+        background: rgba(231, 76, 60, 0.4);
+      }
+
+      .grid-10 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 10px;
+        background: rgba(30, 30, 30, 0.8);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 20px;
+      }
+
+      .grid-slot {
+        aspect-ratio: 16/9;
+        background: #1a1a1a;
+        border: 2px dashed #444;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 24px;
+        font-weight: 700;
+        transition: all 0.3s;
+        position: relative;
+        min-height: 120px;
+      }
+
+      .grid-slot.occupied {
+        border-style: solid;
+        border-color: #2ecc71;
+        background: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+      }
+
+      .grid-slot:hover {
+        border-color: #d4af37;
+        color: #d4af37;
+      }
+
+      .grid-slot .slot-info {
+        font-size: 12px;
+        color: #888;
+        margin-top: 5px;
+        text-align: center;
+        max-width: 90%;
+        word-wrap: break-word;
+      }
+
+      .actions-menu {
+        background: rgba(30, 30, 30, 0.8);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 20px;
+        display: none;
+      }
+
+      .actions-menu.visible {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+
+      .action-btn {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        border-color: #d4af37;
+      }
+
+      .action-btn.active {
+        background: linear-gradient(135deg, #d4af37 0%, #c49a2a 100%);
+        color: #1a1a1a;
+        border-color: #d4af37;
+      }
+
+      .action-btn h3 {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .action-btn.active h3 {
+        color: #1a1a1a;
+      }
+
+      .action-btn p {
+        color: #888;
+        font-size: 13px;
+      }
+
+      .game-input-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .game-input-group input {
+        flex: 1;
+        padding: 8px 12px;
+        background: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+      }
+
+      .game-input-group select {
+        padding: 8px 12px;
+        background: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .game-input-group input:focus,
+      .game-input-group select:focus {
+        outline: none;
+        border-color: #d4af37;
+      }
+
+      .execution-progress {
+        background: rgba(30, 30, 30, 0.8);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+      }
+
+      .progress-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        margin-bottom: 8px;
+      }
+
+      .progress-status {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .progress-status.pending {
+        background: #888;
+      }
+
+      .progress-status.success {
+        background: #2ecc71;
+      }
+
+      .progress-status.error {
+        background: #e74c3c;
+      }
+
+      .progress-info {
+        flex: 1;
+        font-size: 14px;
+      }
+
+      .total-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid #d4af37;
+        border-radius: 8px;
+        margin-top: 15px;
+      }
+
+      .total-summary strong {
+        color: #d4af37;
+        font-size: 18px;
+      }
+
+      .total-summary span {
+        color: #fff;
       }
     </style>
   </head>
@@ -25,11 +300,10 @@
     <div class="workspace">
       <header class="workspace-header">
         <div>
-          <p class="title" id="app-version-label">Fastbot</p>
-          <p class="meta" id="license-expiration">Expiracao da licenca: verificando...</p>
+          <p class="title">Executar Navegadores</p>
+          <p class="meta">Grid de 10 navegadores com automação via LLM</p>
         </div>
         <div class="header-actions">
-          <div class="user-chip" id="user-chip">Usuario nao identificado</div>
           <button class="btn-ghost" type="button" onclick="navigate('passwords')">
             Abrir Contas
           </button>
@@ -37,189 +311,86 @@
       </header>
 
       <div class="panels-grid">
-        <section class="panel nav-panel">
+        <section class="panel">
           <div class="panel-header">
-            <strong>Configuracao de Navegacao</strong>
-            <span class="meta">Modo mobile / desktop - Chrome indetectavel</span>
+            <strong>Configuração de Links</strong>
+            <span class="meta">Configure URLs e quantidades</span>
           </div>
 
-          <div class="execution-config">
-            <div class="form-group">
-              <label>Macro</label>
-              <select id="macro-select" onchange="updateMacroInfo()">
-                <option value="">Selecione um macro</option>
-              </select>
-              <div id="macro-info" class="helper-text"></div>
-            </div>
-
-            <div class="form-group">
-              <label>Quantidade de Contas</label>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <button type="button" class="btn-spinner" onclick="changeInstanceCount(-1)" style="background: #333; border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 6px; cursor: pointer; font-size: 20px; font-weight: 600;">−</button>
-                <input
-                  type="number"
-                  id="instances-count"
-                  value="1"
-                  min="1"
-                  max="12"
-                  readonly
-                  style="width: 80px; text-align: center; font-size: 16px; font-weight: 600; background: #1a1a1a; border: 1px solid #444; color: #fff; border-radius: 6px; padding: 10px;"
-                />
-                <button type="button" class="btn-spinner" onclick="changeInstanceCount(1)" style="background: #333; border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 6px; cursor: pointer; font-size: 20px; font-weight: 600;">+</button>
-              </div>
-              <small class="helper-text">Máximo: 12 sessões simultâneas</small>
-            </div>
-
-            <div class="form-group">
-              <label>Valores de Depósito (R$)</label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                  <label style="font-size: 12px; color: #888; margin-bottom: 5px; display: block;">Mínimo</label>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <button type="button" class="btn-spinner" onclick="changeDepositMin(-10)" style="background: #333; border: 1px solid #444; color: #fff; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 600;">−</button>
-                    <input
-                      type="number"
-                      id="deposit-min"
-                      value="20"
-                      min="1"
-                      max="10000"
-                      readonly
-                      style="width: 80px; text-align: center; font-size: 14px; font-weight: 600; background: #1a1a1a; border: 1px solid #444; color: #2ecc71; border-radius: 6px; padding: 8px;"
-                    />
-                    <button type="button" class="btn-spinner" onclick="changeDepositMin(10)" style="background: #333; border: 1px solid #444; color: #fff; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 600;">+</button>
-                  </div>
-                </div>
-                <div>
-                  <label style="font-size: 12px; color: #888; margin-bottom: 5px; display: block;">Máximo</label>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <button type="button" class="btn-spinner" onclick="changeDepositMax(-10)" style="background: #333; border: 1px solid #444; color: #fff; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 600;">−</button>
-                    <input
-                      type="number"
-                      id="deposit-max"
-                      value="100"
-                      min="1"
-                      max="10000"
-                      readonly
-                      style="width: 80px; text-align: center; font-size: 14px; font-weight: 600; background: #1a1a1a; border: 1px solid #444; color: #e74c3c; border-radius: 6px; padding: 8px;"
-                    />
-                    <button type="button" class="btn-spinner" onclick="changeDepositMax(10)" style="background: #333; border: 1px solid #444; color: #fff; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 600;">+</button>
-                  </div>
-                </div>
-              </div>
-              <small class="helper-text">Valores aleatórios entre Min e Max serão usados para depósitos automáticos</small>
-            </div>
-
-            <div class="form-group">
-              <label>Link de Indicação</label>
-              <select id="referral-link-select" style="width: 100%; padding: 10px; background: #1a1a1a; border: 1px solid #444; color: #fff; border-radius: 6px;">
-                <option value="">Sem link de indicação</option>
-              </select>
-              <small class="helper-text">Selecione um link de indicação para usar ao criar as contas</small>
-            </div>
-
-            <div class="toggle-inline">
-              <label>
-                <span>Registrar automaticamente cada cadastro concluido</span>
-                <input type="checkbox" id="registration-save" checked />
-              </label>
-              <label>
-                <span>Iniciar cada janela com sessao limpa</span>
-                <input type="checkbox" id="fresh-session" />
-              </label>
-            </div>
-            <small class="helper-text">
-              Desative a sessao limpa para reaproveitar logins gravados e evitar novos CAPTCHAs.
-            </small>
+          <div id="links-config-container">
+            <!-- Links serão adicionados dinamicamente -->
           </div>
 
-          <button onclick="executeAll()" class="btn-primary" id="btn-execute">
-            >> Executar Macros
-          </button>
+          <div class="total-summary">
+            <span>Total de navegadores: </span>
+            <strong id="total-browsers">0 / 10</strong>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button class="btn-primary" type="button" onclick="addLink()">
+              + Adicionar Link
+            </button>
+            <button class="btn-primary" type="button" id="btn-open-browsers" onclick="openBrowsers()">
+              Abrir Navegadores
+            </button>
+          </div>
         </section>
 
-        <section class="panel panel-switches">
+        <section class="panel">
           <div class="panel-header">
-            <strong>Funcionalidades rapidas</strong>
-            <span class="meta">Sem envelopes  bonus</span>
+            <strong>Grid de Navegadores</strong>
+            <span class="meta">Visualização 2x5</span>
           </div>
 
-          <div class="switch-grid">
-            <div class="switch-row">
-              <div>
-                <strong>Usar dados de proxy</strong>
-                <small>Proxy desativado (1 conexao direta)</small>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-proxy" checked />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
-            </div>
+          <div class="grid-10" id="grid-container">
+            <!-- Slots do grid serão gerados dinamicamente -->
+          </div>
+        </section>
+      </div>
 
-            <div class="switch-row" data-switch-row="rotate">
-              <div>
-                <strong>Proxy rotativo</strong>
-                <small>Alterna entre as proxies cadastradas</small>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-proxy-rotate" />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
-            </div>
+      <div class="panels-grid" id="actions-panel" style="display: none;">
+        <section class="panel">
+          <div class="panel-header">
+            <strong>Ações nos Navegadores</strong>
+            <span class="meta">Executar após todos navegadores carregarem</span>
+          </div>
 
-            <div class="switch-row">
-              <div>
-                <strong>Multiplos links</strong>
-                <small>Executa lista de URLs em sequencia</small>
+          <div class="actions-menu visible">
+            <div class="action-grid">
+              <div class="action-btn" id="action-create-account" onclick="executeAction('createAccount')">
+                <h3>Criar Conta</h3>
+                <p>Analisa formulário e preenche automaticamente</p>
               </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-multi-links" />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
-            </div>
 
-            <div class="switch-row">
-              <div>
-                <strong>Captcha auto-resolver</strong>
-                <small>Utiliza o solver experimental integrado</small>
+              <div class="action-btn" id="action-create-deposit" onclick="executeAction('createDeposit')">
+                <h3>Criar Depósito</h3>
+                <p>Encontra campo de depósito e valor</p>
               </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-auto-captcha" checked />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
-            </div>
 
-            <div class="switch-row">
-              <div>
-                <strong>Sem envelopes-bonus</strong>
-                <small>Oculta pop-ups e notificacoes promocionais</small>
+              <div class="action-btn" id="action-go-to-game" onclick="executeAction('goToGame')">
+                <h3>Ir até Jogo</h3>
+                <p>Navega para jogo específico</p>
+                <div class="game-input-group">
+                  <input type="text" id="game-name-input" placeholder="Nome do jogo...">
+                  <select id="predefined-games-select">
+                    <option value="">Selecionar jogo...</option>
+                  </select>
+                </div>
               </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-bonus" checked />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
-            </div>
 
-            <div class="switch-row">
-              <div>
-                <strong>Fechar anuncios automaticamente</strong>
-                <small>Tenta identificar pop-ups publicitarios e fechar sozinho</small>
+              <div class="action-btn" id="action-close-popup" onclick="executeAction('closePopup')">
+                <h3>Fechar Popup</h3>
+                <p>Identifica e fecha popups automaticamente</p>
               </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-auto-ads" checked />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
             </div>
+          </div>
 
-            <div class="switch-row">
-              <div>
-                <strong>Simular modo retrato</strong>
-                <small>Forca janelas mobile no layout vertical</small>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switch-portrait" />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
+          <div class="execution-progress" id="execution-progress" style="display: none;">
+            <div class="panel-header">
+              <strong>Progresso da Execução</strong>
+              <span class="meta" id="progress-summary">0/0 concluídos</span>
             </div>
+            <div id="progress-container"></div>
           </div>
         </section>
       </div>
@@ -227,738 +398,291 @@
       <div class="panels-grid">
         <section class="panel">
           <div class="panel-header">
-            <strong>Distribuicao das janelas</strong>
-            <span class="meta">Chrome nao necessita API</span>
-          </div>
-          <div class="grid-preview">
-            <strong>Preview do grid</strong>
-            <div id="grid-visual-container"></div>
-          </div>
-
-          <div id="instances-config" style="display: none">
-            <h3 class="section-title">Configuracao individual</h3>
-            <div id="instances-list"></div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <strong>Status da execucao</strong>
+            <strong>Status da Execução</strong>
             <span class="meta">Logs em tempo real</span>
           </div>
-          <div id="status-summary" class="status-summary">Aguardando execucao...</div>
+          <div id="status-summary" class="status-summary">Aguardando configuração...</div>
           <div class="execution-log" id="execution-log"></div>
         </section>
       </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="notifications.js"></script>
     <script src="supabase-client.js"></script>
     <script src="auth.js"></script>
     <script src="router.js"></script>
 
     <script>
-      let currentMacro = null;
-      let proxies = [];
-      let pixKeys = [];
-      let referralLinks = [];
       let currentUser = null;
-      let licenseMetadata = null;
-      const CURRENT_APP_VERSION = window.APP_VERSION || window.fastbotVersion || '1.0.5';
-      const toggleState = {
-        proxyEnabled: true,
-        proxyRotate: false,
-        multiLinks: false,
-        autoCaptcha: true,
-        disableBonus: true,
-        portraitMode: false,
-        autoCloseAds: true,
-      };
+      let links = [];
+      let predefinedGames = [];
+      let browsers = [];
+      let browsersOpened = false;
 
       async function init() {
         currentUser = await requirePagePermission("execute");
         if (!currentUser) return;
         document.getElementById("menu-container").innerHTML = createMenu(currentUser);
-        const versionLabel = document.getElementById("app-version-label");
-        if (versionLabel) {
-          versionLabel.textContent = `Fastbot | Versao ${CURRENT_APP_VERSION}`;
-        }
-        setupSwitches();
-        updateWorkspaceHeader();
-        await loadMacros();
-        await loadProxies();
-        await loadPixKeys();
-        await loadReferralLinks();
-        await loadLicenseMetadata();
+        await loadPredefinedGames();
+        updateGrid();
       }
 
-      async function loadMacros() {
-        const select = document.getElementById("macro-select");
-        const macroInfo = document.getElementById("macro-info");
-        select.disabled = true;
-        macroInfo.textContent = "Carregando macros...";
+      function addLink() {
+        const linkId = Date.now();
+        links.push({
+          id: linkId,
+          url: '',
+          count: 1
+        });
+        renderLinks();
+        updateGrid();
+      }
 
-        try {
-          let query = supabaseClient
-            .from("macros")
-            .select("*")
-            .order("name");
+      function removeLink(id) {
+        links = links.filter(link => link.id !== id);
+        renderLinks();
+        updateGrid();
+      }
 
-          if (!currentUser || currentUser.role !== "dev") {
-            query = query.eq("enabled", true);
-          }
+      function updateLinkUrl(id, url) {
+        const link = links.find(l => l.id === id);
+        if (link) {
+          link.url = url;
+        }
+      }
 
-          const { data, error } = await query;
-          if (error) {
-            throw error;
-          }
-
-          const macros = data || [];
-          select.innerHTML = '<option value="">Selecione um macro</option>';
-
-          if (!macros.length) {
-            macroInfo.innerHTML = `
-              Nenhum macro encontrado para este usuario.<br>
-              <button class="btn-ghost" style="margin-top:8px;" onclick="navigate('macros')">
-                Criar macros agora
-              </button>
-            `;
-            document.getElementById("btn-execute").disabled = true;
-            currentMacro = null;
-            updateGridPreview();
+      function updateLinkCount(id, delta) {
+        const link = links.find(l => l.id === id);
+        if (link) {
+          let newCount = link.count + delta;
+          newCount = Math.max(0, Math.min(10, newCount));
+          
+          const total = getTotalBrowserCount() - link.count + newCount;
+          if (total > 10) {
+            showNotification('Máximo de 10 navegadores', 'warning');
             return;
           }
+          
+          link.count = newCount;
+        }
+        renderLinks();
+        updateGrid();
+      }
 
-          document.getElementById("btn-execute").disabled = false;
-          macroInfo.textContent = "Selecione um macro para ver detalhes.";
+      function getTotalBrowserCount() {
+        return links.reduce((sum, link) => sum + link.count, 0);
+      }
 
-          macros.forEach((macro) => {
-            const option = document.createElement("option");
-            option.value = macro.id;
-            option.textContent = `${macro.name} (${macro.device_type})`;
-            select.appendChild(option);
-          });
-        } catch (loadError) {
-          console.error("Erro ao carregar macros:", loadError);
-          showNotification("Erro ao carregar macros: " + loadError.message, "error");
-          macroInfo.innerHTML =
-            "Erro ao carregar macros. Tente atualizar ou verifique sua conexao.";
-          document.getElementById("btn-execute").disabled = true;
-        } finally {
-          select.disabled = false;
+      function renderLinks() {
+        const container = document.getElementById('links-config-container');
+        
+        if (links.length === 0) {
+          container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Nenhum link configurado</p>';
+          return;
+        }
+
+        container.innerHTML = links.map((link, index) => `
+          <div class="link-config">
+            <input type="text" placeholder="https://..." value="${link.url}" onchange="updateLinkUrl(${link.id}, this.value)" />
+            <div class="spinner-container">
+              <button class="spinner-btn" onclick="updateLinkCount(${link.id}, -1)">-</button>
+              <input type="number" class="spinner-value" value="${link.count}" readonly />
+              <button class="spinner-btn" onclick="updateLinkCount(${link.id}, 1)">+</button>
+            </div>
+            <button class="btn-remove-link" onclick="removeLink(${link.id})">Remover</button>
+          </div>
+        `).join('');
+
+        document.getElementById('total-browsers').textContent = `${getTotalBrowserCount()} / 10`;
+      }
+
+      function updateGrid() {
+        const container = document.getElementById('grid-container');
+        let slotIndex = 0;
+
+        for (const link of links) {
+          for (let i = 0; i < link.count; i++) {
+            if (slotIndex >= 10) break;
+            
+            const slotNumber = slotIndex + 1;
+            const slotUrl = link.url || 'Link não configurado';
+            
+            container.innerHTML += `
+              <div class="grid-slot occupied">
+                <span>${slotNumber}</span>
+                <div class="slot-info">${slotUrl}</div>
+              </div>
+            `;
+            
+            slotIndex++;
+          }
+          
+          if (slotIndex >= 10) break;
+        }
+
+        for (let i = slotIndex; i < 10; i++) {
+          container.innerHTML += `
+            <div class="grid-slot">
+              <span>${i + 1}</span>
+              <div class="slot-info">Vazio</div>
+            </div>
+          `;
         }
       }
 
-      async function loadProxies() {
-        const { data } = await supabaseClient
-          .from("proxies")
-          .select("*")
-          .eq("user_id", currentUser.id);
-        proxies = data || [];
-      }
+      async function openBrowsers() {
+        if (links.length === 0) {
+          showNotification('Configure pelo menos um link', 'warning');
+          return;
+        }
 
-      async function loadPixKeys() {
-        const { data } = await supabaseClient
-          .from("pix_keys")
-          .select("*")
-          .eq("user_id", currentUser.id);
-        pixKeys = data || [];
-      }
+        const total = getTotalBrowserCount();
+        if (total === 0) {
+          showNotification('Configure quantidade de navegadores', 'warning');
+          return;
+        }
 
-      async function loadReferralLinks() {
+        document.getElementById('btn-open-browsers').disabled = true;
+        log('Iniciando abertura de navegadores...', 'info');
+
         try {
-          const { data } = await supabaseClient
-            .from("referral_links")
-            .select("*")
-            .eq("user_id", currentUser.id)
-            .eq("is_active", true)
-            .order("priority", { ascending: false });
+          if (!window.electronAPI) {
+            throw new Error('ElectronAPI não disponível');
+          }
 
-          referralLinks = data || [];
+          const config = {
+            links: links.map(link => ({
+              url: link.url,
+              count: link.count
+            }))
+          };
 
-          // Atualizar o select
-          const select = document.getElementById("referral-link-select");
-          if (select) {
-            select.innerHTML = '<option value="">Sem link de indicação</option>';
-
-            referralLinks.forEach(link => {
-              const option = document.createElement("option");
-              option.value = link.id;
-              option.textContent = `${link.platform} - ${link.url.substring(0, 50)}${link.url.length > 50 ? '...' : ''}`;
-              select.appendChild(option);
-            });
+          const result = await window.electronAPI.browserGrid.open(config);
+          
+          if (result.success) {
+            browsers = result.browsers || [];
+            browsersOpened = true;
+            
+            log(`${browsers.length} navegadores abertos com sucesso!`, 'success');
+            
+            document.getElementById('actions-panel').style.display = 'grid';
+            showNotification('Navegadores abertos! Ações disponíveis.', 'success');
+          } else {
+            throw new Error(result.error || 'Erro ao abrir navegadores');
           }
         } catch (error) {
-          console.error("Erro ao carregar links de indicação:", error);
-          referralLinks = [];
-        }
-      }
-
-      async function updateMacroInfo() {
-        const macroId = document.getElementById("macro-select").value;
-        if (!macroId) {
-          currentMacro = null;
-          document.getElementById("macro-info").innerHTML = "";
-          return;
-        }
-
-        const { data } = await supabaseClient
-          .from("macros")
-          .select("*")
-          .eq("id", macroId)
-          .single();
-
-        currentMacro = data;
-
-        if (data) {
-          const actions = JSON.parse(data.actions || "[]");
-          document.getElementById("macro-info").innerHTML = `
-            <strong>${data.name}</strong><br>
-            Device: ${data.device_type}<br>
-            Acoes: ${actions.length}<br>
-            Delay: ${data.delay_min || 500}ms - ${data.delay_max || 2000}ms
-          `;
-          
-          console.log('i Macro selecionado:', data);
-          updateGridPreview();
-        }
-      }
-
-      function setupSwitches() {
-        const mappings = [
-          { id: "switch-proxy", key: "proxyEnabled", onChange: handleProxyToggle },
-          { id: "switch-proxy-rotate", key: "proxyRotate", onChange: () => rebuildInstanceControls() },
-          { id: "switch-multi-links", key: "multiLinks", onChange: () => rebuildInstanceControls() },
-          { id: "switch-auto-captcha", key: "autoCaptcha" },
-          { id: "switch-bonus", key: "disableBonus" },
-          { id: "switch-auto-ads", key: "autoCloseAds" },
-          {
-            id: "switch-portrait",
-            key: "portraitMode",
-            onChange: () => updateGridPreview(),
-          },
-        ];
-
-        mappings.forEach(({ id, key, onChange }) => {
-          const input = document.getElementById(id);
-          if (!input) return;
-          input.checked = !!toggleState[key];
-          input.addEventListener("change", () => {
-            toggleState[key] = input.checked;
-            if (onChange) {
-              onChange(input.checked);
-            }
-          });
-        });
-
-        handleProxyToggle(toggleState.proxyEnabled);
-      }
-
-      function handleProxyToggle(enabled) {
-        const rotateSwitch = document.getElementById("switch-proxy-rotate");
-        const rotateRow = document.querySelector('[data-switch-row="rotate"]');
-        if (rotateSwitch) {
-          rotateSwitch.disabled = !enabled;
-          if (!enabled) {
-            toggleState.proxyRotate = false;
-            rotateSwitch.checked = false;
-          } else {
-            rotateSwitch.checked = !!toggleState.proxyRotate;
-          }
-        }
-        if (rotateRow) {
-          rotateRow.classList.toggle("disabled", !enabled);
-        }
-        rebuildInstanceControls();
-      }
-
-      function renderProxyControl(index, enabled) {
-        if (!enabled) {
-          return `<p class="helper-text">Conexao direta</p>`;
-        }
-        if (!proxies.length) {
-          return `<p class="helper-text">Nenhuma proxy cadastrada</p>`;
-        }
-        if (toggleState.proxyRotate) {
-          const autoProxy = proxies[index % proxies.length];
-          return `<p class="helper-text">Automatico: ${autoProxy.host}:${autoProxy.port}</p>`;
-        }
-        return `
-          <select id="proxy-${index}" style="width: 100%; padding: 5px;">
-            <option value="">Sem proxy</option>
-            ${proxies
-              .map((p) => `<option value="${p.id}">${p.host}:${p.port}</option>`)
-              .join("")}
-          </select>
-        `;
-      }
-
-      function getProxyForInstance(index) {
-        if (!toggleState.proxyEnabled || !proxies.length) {
-          return null;
-        }
-        if (toggleState.proxyRotate) {
-          return proxies[index % proxies.length];
-        }
-        const proxyId = document.getElementById(`proxy-${index}`)?.value;
-        return proxyId ? proxies.find((p) => p.id === proxyId) : null;
-      }
-
-      function rebuildInstanceControls() {
-        if (!currentMacro) return;
-        const count = parseInt(document.getElementById("instances-count").value) || 1;
-        renderInstancesConfig(count);
-      }
-
-      function updateGridPreview() {
-        const count = parseInt(document.getElementById("instances-count").value) || 1;
-        
-        if (!currentMacro) {
-          document.getElementById("grid-visual-container").innerHTML = '<p>Selecione um macro primeiro</p>';
-          return;
-        }
-
-        const deviceOverride = toggleState.portraitMode ? "mobile" : currentMacro.device_type;
-        const positions = calculatePositions(count, deviceOverride);
-
-        const container = document.getElementById("grid-visual-container");
-        let html = `<div class="grid-visual">`;
-
-        positions.forEach((pos, i) => {
-          const left = ((pos.x / 1920) * 100).toFixed(1);
-          const top = ((pos.y / 1080) * 100).toFixed(1);
-          const width = ((pos.width / 1920) * 100).toFixed(1);
-          const height = ((pos.height / 1080) * 100).toFixed(1);
-
-          html += `<div class="grid-cell" style="left:${left}%; top:${top}%; width:${width}%; height:${height}%;">${
-            i + 1
-          }</div>`;
-        });
-
-        html += `</div>`;
-        html += `<p style="margin-top: 10px;"><strong>${count}</strong> janela${
-          count > 1 ? "s" : ""
-        } - <strong>${deviceOverride}</strong></p>`;
-
-        document.getElementById("grid-visual-container").innerHTML = html;
-
-        renderInstancesConfig(count);
-      }
-
-      function renderInstancesConfig(count) {
-        const container = document.getElementById("instances-list");
-        if (!currentMacro) {
-          container.innerHTML = "";
-          document.getElementById("instances-config").style.display = "none";
-          return;
-        }
-
-        let html = "";
-        const proxiesEnabled = toggleState.proxyEnabled;
-        const multiLinksEnabled = toggleState.multiLinks;
-
-        for (let i = 0; i < count; i++) {
-          html += `
-          <div class="instance-config">
-            <div class="instance-header"> Janela ${i + 1}</div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <div>
-                <label style="font-size: 12px;">Proxy:</label>
-                ${renderProxyControl(i, proxiesEnabled)}
-              </div>
-              
-              <div>
-                <label style="font-size: 12px;">PIX:</label>
-                <select id="pix-${i}" style="width: 100%; padding: 5px;">
-                  <option value="">Sem PIX</option>
-                  ${pixKeys
-                    .map(
-                      (p) =>
-                        `<option value="${p.id}">${p.key.substring(
-                          0,
-                          20
-                        )}...</option>`
-                    )
-                    .join("")}
-                </select>
-              </div>
-            </div>
-            <p class="helper-text" style="margin-top:8px;">Senha gerada automaticamente para esta janela.</p>
-
-            ${
-              multiLinksEnabled
-                ? `<div class="form-group" style="margin-top:8px;">
-                    <label style="font-size:12px;">Link / URL para esta janela</label>
-                    <input type="text" id="link-${i}" placeholder="https://..." style="width:100%; padding:6px;" />
-                  </div>`
-                : ""
-            }
-          </div>
-        `;
-        }
-
-        if (!proxiesEnabled) {
-          html += `<p class="helper-text" style="margin-top:8px;">Proxies desativadas: conexao direta em todas as janelas.</p>`;
-        }
-
-        container.innerHTML = html;
-        document.getElementById("instances-config").style.display = "block";
-      }
-
-      async function executeAll() {
-        if (!currentMacro) {
-          showNotification("Selecione um macro", "warning");
-          return;
-        }
-
-        const count = parseInt(document.getElementById("instances-count").value) || 1;
-        const shouldRegister = document.getElementById("registration-save").checked;
-        const freshSession = document.getElementById("fresh-session").checked;
-        const device = toggleState.portraitMode ? "mobile" : currentMacro.device_type;
-
-        // Link de indicação
-        const referralLinkId = document.getElementById("referral-link-select")?.value;
-        const selectedReferralLink = referralLinkId ? referralLinks.find(l => l.id === referralLinkId) : null;
-
-        console.log('i Iniciando execucao...');
-        console.log('   Macro:', currentMacro.name);
-        console.log('   Device:', device);
-        console.log('   Instancias:', count);
-        if (selectedReferralLink) {
-          console.log('   Link de indicacao:', selectedReferralLink.platform, '-', selectedReferralLink.url);
-        }
-
-        document.getElementById("btn-execute").disabled = true;
-
-        const logContainer = document.getElementById("execution-log");
-        const statusSummary = document.getElementById("status-summary");
-
-        logContainer.innerHTML = "";
-        statusSummary.innerHTML = `Executando ${count} instancia(s)...`;
-
-        function log(msg, type = "info") {
-          const colors = {
-            info: "#0f0",
-            success: "#0f0",
-            warning: "#ff0",
-            error: "#f00",
-          };
-          logContainer.innerHTML += `<p style="color: ${
-            colors[type]
-          }">[${new Date().toLocaleTimeString()}] ${msg}</p>`;
-          logContainer.scrollTop = logContainer.scrollHeight;
-          console.log(`[${type.toUpperCase()}] ${msg}`);
-        }
-
-        if (!window.electronAPI?.executeMacro) {
-          const message =
-            "Bridge do Fastbot nao carregou (electronAPI.executeMacro indisponivel). Reinicie o aplicativo e tente novamente.";
-          log(message, "error");
-          statusSummary.textContent = "Execucao indisponivel: reinicie o app.";
-          showNotification(message, "error");
-          document.getElementById("btn-execute").disabled = false;
-          return;
-        }
-
-        log("i Iniciando execucao...", "info");
-        log(`i Macro: ${currentMacro.name}`, "info");
-        log(` Device: ${device}`, "info");
-        log(` Sessao limpa: ${freshSession ? "sim" : "nao"}`, "info");
-        log(
-          ` Proxy: ${
-            toggleState.proxyEnabled
-              ? toggleState.proxyRotate
-                ? "rotativo"
-                : "fixo"
-              : "desativado"
-          }`,
-          "info"
-        );
-        log(` Modo retrato: ${toggleState.portraitMode ? "sim" : "nao"}`, "info");
-        if (selectedReferralLink) {
-          log(` Link de indicacao: ${selectedReferralLink.platform}`, "info");
-        }
-
-        const positions = calculatePositions(count, device);
-        const instances = [];
-
-        for (let i = 0; i < count; i++) {
-          const proxy = getProxyForInstance(i);
-          const pixId = document.getElementById(`pix-${i}`)?.value;
-          const pixEntry = pixId ? pixKeys.find((p) => p.id === pixId) : null;
-
-          // Link de indicação ou link customizado
-          let linkValue = "";
-          if (toggleState.multiLinks) {
-            linkValue = document.getElementById(`link-${i}`)?.value.trim() || "";
-          } else if (selectedReferralLink) {
-            linkValue = selectedReferralLink.url;
-          }
-
-          const siteLabel = linkValue || currentMacro.name;
-          const passwordValue = generateStrongPassword();
-
-          instances.push({
-            index: i,
-            position: positions[i],
-            proxy,
-            pix: pixEntry,
-            email: generateRandomEmail(),
-            username: generateRandomUsername(),
-            phone: generateBrPhone(),
-            passwordValue,
-            link: linkValue || null,
-            siteLabel,
-            notes: linkValue || null,
-            referralLink: selectedReferralLink || null,
-          });
-        }
-
-        log(`i ${instances.length} instancias configuradas`, "info");
-
-        const promises = instances.map(async (instance) => {
-          log(` [Janela ${instance.index + 1}] Iniciando...`, "info");
-
-          try {
-          const config = {
-            actions: JSON.parse(currentMacro.actions),
-            device: device,
-            position: instance.position,
-            proxy: instance.proxy,
-              password: instance.passwordValue,
-              pixKey: instance.pix?.key || null,
-              email: instance.email,
-              username: instance.username,
-              phoneNumber: instance.phone,
-              link: instance.link || null,
-              instanceIndex: instance.index,
-              delayMin: currentMacro.delay_min || 500,
-              delayMax: currentMacro.delay_max || 2000,
-              freshSession,
-              options: { ...toggleState }
-            };
-
-            console.log(` Config para janela ${instance.index + 1}:`, config);
-
-            const result = await window.electronAPI.executeMacro(config);
-
-            if (result.success) {
-              log(`[Janela ${instance.index + 1}] Concluido`, "success");
-              await trackMacroExecution(currentUser.id, currentMacro.id);
-
-              // Incrementar contador de uso do link de indicação
-              if (instance.referralLink) {
-                try {
-                  const { error: linkError } = await supabaseClient
-                    .from('referral_links')
-                    .update({ usage_count: (instance.referralLink.usage_count || 0) + 1 })
-                    .eq('id', instance.referralLink.id);
-
-                  if (linkError) {
-                    console.error('Erro ao atualizar contador do link:', linkError);
-                  }
-                } catch (linkUpdateError) {
-                  console.error('Erro ao incrementar uso do link:', linkUpdateError);
-                }
-              }
-
-              if (shouldRegister && typeof saveRegistration === "function") {
-                try {
-                  await saveRegistration({
-                    user_id: currentUser.id,
-                    macro_id: currentMacro.id,
-                    macro_name: currentMacro.name,
-                    device_type: currentMacro.device_type,
-                    instance_index: instance.index,
-                    site_label: instance.siteLabel || currentMacro.name,
-                    notes: instance.notes || null,
-                    email: instance.email,
-                    password_id: null,
-                    password_label: 'auto',
-                    password_value: instance.passwordValue,
-                    pix_id: instance.pix?.id || null,
-                    pix_key: instance.pix?.key || null,
-                    pix_type: instance.pix?.key_type || null,
-                    proxy_id: instance.proxy?.id || null,
-                    proxy_host: instance.proxy?.host || null,
-                    proxy_port: instance.proxy?.port || null,
-                    proxy_username: instance.proxy?.username || null,
-                    proxy_password: instance.proxy?.password || null,
-                    status: "success",
-                  });
-                  log(
-                    `[Janela ${instance.index + 1}] Cadastro salvo (${instance.email})`,
-                    "success"
-                  );
-                } catch (saveError) {
-                  log(
-                    `[Janela ${instance.index + 1}] Erro ao salvar cadastro: ${saveError.message}`,
-                    "error"
-                  );
-                }
-              }
-            } else {
-              log(`[Janela ${instance.index + 1}] Falhou: ${result.error}`, "error");
-            }
-          } catch (error) {
-            log(
-              ` [Janela ${instance.index + 1}] Erro: ${error.message}`,
-              "error"
-            );
-            console.error("Erro completo:", error);
-          }
-        });
-
-        await Promise.all(promises);
-
-        statusSummary.innerHTML = `Execucao finalizada!`;
-        log("i Todas as instancias finalizadas!", "success");
-        document.getElementById("btn-execute").disabled = false;
-      }
-
-      async function loadLicenseMetadata() {
-        if (!currentUser) return;
-        try {
-          const { data, error } = await supabaseClient
-            .from("users")
-            .select("access_expires_at")
-            .eq("id", currentUser.id)
-            .single();
-
-          if (error) throw error;
-          licenseMetadata = data || null;
-        } catch (metaError) {
-          console.error("Erro ao buscar licenca:", metaError);
-          licenseMetadata = null;
+          log(`Erro: ${error.message}`, 'error');
+          showNotification('Erro ao abrir navegadores', 'error');
         } finally {
-          updateWorkspaceHeader();
+          document.getElementById('btn-open-browsers').disabled = false;
         }
       }
 
-      function updateWorkspaceHeader() {
-        const chip = document.getElementById("user-chip");
-        if (chip && currentUser) {
-          chip.textContent = `${currentUser.email} - ${currentUser.role}`;
+      async function executeAction(action) {
+        if (!browsersOpened) {
+          showNotification('Abra os navegadores primeiro', 'warning');
+          return;
         }
 
-        const licenseLabel = document.getElementById("license-expiration");
-        if (!licenseLabel) return;
-
-        if (licenseMetadata?.access_expires_at) {
-          const expires = new Date(licenseMetadata.access_expires_at);
-          licenseLabel.textContent = `Expiracao da licenca: ${expires.toLocaleDateString()} ${expires.toLocaleTimeString()}`;
-        } else {
-          licenseLabel.textContent = "Expiracao da licenca: em validacao com suporte";
-        }
-      }
-
-      function calculatePositions(count, device) {
-        const screenWidth = 1920;
-        const screenHeight = 1080;
-
-        if (device === "mobile") {
-          const windowWidth = 400;
-          const windowHeight = 844;
-          const cols = Math.min(Math.ceil(Math.sqrt(count)), 4);
-          const rows = Math.ceil(count / cols);
-
-          const positions = [];
-          for (let i = 0; i < count; i++) {
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            positions.push({
-              x: col * (windowWidth + 10),
-              y: row * (windowHeight + 10),
-              width: windowWidth,
-              height: windowHeight,
-            });
+        let params = {};
+        
+        if (action === 'goToGame') {
+          const customName = document.getElementById('game-name-input').value;
+          const predefinedValue = document.getElementById('predefined-games-select').value;
+          
+          if (predefinedValue) {
+            params.gameName = predefinedValue;
+          } else if (customName) {
+            params.gameName = customName;
+          } else {
+            showNotification('Informe o nome do jogo', 'warning');
+            return;
           }
-          return positions;
         }
 
-        // Desktop
-        const cols = Math.min(Math.ceil(Math.sqrt(count)), 4);
-        const rows = Math.ceil(count / cols);
-        const windowWidth = Math.floor(screenWidth / cols);
-        const windowHeight = Math.floor(screenHeight / rows);
+        log(`Executando ação: ${action}...`, 'info');
+        
+        const progressContainer = document.getElementById('execution-progress');
+        const progressItems = document.getElementById('progress-container');
+        
+        progressContainer.style.display = 'block';
+        progressItems.innerHTML = '';
 
-        const positions = [];
-        for (let i = 0; i < count; i++) {
-          const col = i % cols;
-          const row = Math.floor(i / cols);
-          positions.push({
-            x: col * windowWidth,
-            y: row * windowHeight,
-            width: windowWidth,
-            height: windowHeight,
+        document.getElementById('progress-summary').textContent = `0/${browsers.length} concluídos`;
+
+        try {
+          if (!window.electronAPI) {
+            throw new Error('ElectronAPI não disponível');
+          }
+
+          const result = await window.electronAPI.browserGrid.executeAction({
+            action,
+            params,
+            browsers: browsers
           });
+
+          if (result.success) {
+            const results = result.results || {};
+            
+            Object.entries(results).forEach(([browserIndex, result]) => {
+              const status = result.status === 'success' ? 'success' : 'error';
+              const message = result.error || 'Concluído';
+              
+              progressItems.innerHTML += `
+                <div class="progress-item">
+                  <div class="progress-status ${status}"></div>
+                  <div class="progress-info">
+                    <strong>Navegador ${parseInt(browserIndex) + 1}:</strong> ${message}
+                  </div>
+                </div>
+              `;
+            });
+
+            const successCount = Object.values(results).filter(r => r.status === 'success').length;
+            document.getElementById('progress-summary').textContent = `${successCount}/${browsers.length} concluídos`;
+
+            log(`Ação ${action} concluída!`, 'success');
+          } else {
+            throw new Error(result.error || 'Erro ao executar ação');
+          }
+        } catch (error) {
+          log(`Erro: ${error.message}`, 'error');
+          showNotification('Erro ao executar ação', 'error');
         }
-        return positions;
       }
 
-      function generateRandomEmail() {
-        const random = Math.random().toString(36).substring(7);
-        return `user_${random}@test.com`;
-      }
+      async function loadPredefinedGames() {
+        try {
+          const { data } = await supabaseClient
+            .from('predefined_games')
+            .select('*')
+            .order('name');
 
-      function generateRandomUsername() {
-        const chars = "abcdefghijklmnopqrstuvwxyz";
-        let result = "";
-        for (let i = 0; i < 12; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
+          predefinedGames = data || [];
+
+          const select = document.getElementById('predefined-games-select');
+          select.innerHTML = '<option value="">Selecionar jogo...</option>';
+
+          predefinedGames.forEach(game => {
+            select.innerHTML += `<option value="${game.name}">${game.name}</option>`;
+          });
+        } catch (error) {
+          console.error('Erro ao carregar jogos:', error);
         }
-        return result;
       }
 
-      function generateStrongPassword(length = 12) {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-        let result = "";
-        for (let i = 0; i < length; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-      }
-
-      function generateBrPhone() {
-        const ddd = Math.floor(Math.random() * 90) + 10;
-        let suffix = "";
-        for (let i = 0; i < 8; i++) {
-          suffix += Math.floor(Math.random() * 10);
-        }
-        return `${ddd}9${suffix}`;
-      }
-
-      // Funções para controles de spinner
-      function changeInstanceCount(delta) {
-        const input = document.getElementById('instances-count');
-        let newValue = parseInt(input.value) + delta;
-        newValue = Math.max(1, Math.min(12, newValue));
-        input.value = newValue;
-        updateGridPreview();
-      }
-
-      function changeDepositMin(delta) {
-        const input = document.getElementById('deposit-min');
-        const maxInput = document.getElementById('deposit-max');
-        let newValue = parseInt(input.value) + delta;
-        newValue = Math.max(1, Math.min(parseInt(maxInput.value), newValue));
-        input.value = newValue;
-      }
-
-      function changeDepositMax(delta) {
-        const input = document.getElementById('deposit-max');
-        const minInput = document.getElementById('deposit-min');
-        let newValue = parseInt(input.value) + delta;
-        newValue = Math.max(parseInt(minInput.value), Math.min(10000, newValue));
-        input.value = newValue;
-      }
-
-      function getDepositAmount() {
-        const min = parseInt(document.getElementById('deposit-min').value);
-        const max = parseInt(document.getElementById('deposit-max').value);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+      function log(msg, type = 'info') {
+        const colors = {
+          info: '#0f0',
+          success: '#0f0',
+          warning: '#ff0',
+          error: '#f00'
+        };
+        
+        const container = document.getElementById('execution-log');
+        container.innerHTML += `<p style="color: ${colors[type]}; margin-bottom: 5px;">[${new Date().toLocaleTimeString()}] ${msg}</p>`;
+        container.scrollTop = container.scrollHeight;
       }
 
       init();
